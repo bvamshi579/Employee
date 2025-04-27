@@ -1,0 +1,17 @@
+Appconfig
+CyberArk
+Doc360
+DR Testing
+Environment
+GPS HCP API
+Kafka
+NESS
+Ops Scorecard - Business Updates
+Prod Release
+Prod Support And Monitoring
+QFINITI
+Smart  Mails
+SMART_Demo
+SSL_Certificates
+SSO
+Docs
