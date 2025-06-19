@@ -1,0 +1,92 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 100;
+  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+  color: #fff;
+  text-align: center;
+  padding: 0.6rem 0; /* Reduced height */
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.header-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  margin-left: 2rem;
+  text-shadow: 0 2px 8px rgba(25, 118, 210, 0.12);
+}
+
+.logout-btn {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 1.5rem;
+  padding: 0.2rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  color: #fff;
+  transition: background 0.2s, color 0.2s;
+  font-size: 1.5rem;
+  border-radius: 4px;
+  height: 40px;
+  width: 40px;
+  justify-content: center;
+  margin-right: 10px;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ff5252;
+  border-radius: 4px;
+}
+
+.logout-btn svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-right: 1rem;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.toggle-btn span {
+  display: block;
+  width: 24px;
+  height: 3px;
+  margin: 3px 0;
+  background: #fff !important;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+@media (max-width: 600px) {
+  .header-title {
+    font-size: 1.1rem;
+    margin-left: 0.5rem;
+  }
+  .toggle-btn {
+    padding: 0.5rem 0.5rem;
+  }
+}

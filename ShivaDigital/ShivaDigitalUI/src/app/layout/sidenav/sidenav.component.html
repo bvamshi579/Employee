@@ -1,0 +1,27 @@
+<nav class="sidenav">
+    <ul>
+      <li *ngFor="let link of navLinks">
+        <div *ngIf="link.children && link.children.length; else singleLink" class="collapsible-link" (click)="toggleCollapse(link)">
+          <span *ngIf="link.icon" class="material-icons">{{ link.icon }}</span>
+          {{ link.label }}
+          <span class="material-icons collapse-arrow" [class.open]="isExpanded(link)">
+            {{ isExpanded(link) ? 'expand_less' : 'expand_more' }}
+          </span>
+        </div>
+        <ng-template #singleLink>
+          <a *ngIf="link.route" [routerLink]="link.route" routerLinkActive="active">
+            <span *ngIf="link.icon" class="material-icons">{{ link.icon }}</span>
+            {{ link.label }}
+          </a>
+        </ng-template>
+        <ul class="child-links" *ngIf="link.children && link.children.length && isExpanded(link)">
+          <li *ngFor="let child of link.children">
+            <a *ngIf="child.route" [routerLink]="child.route" routerLinkActive="active">
+              <span *ngIf="child.icon" class="material-icons">{{ child.icon }}</span>
+              {{ child.label }}
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </nav>

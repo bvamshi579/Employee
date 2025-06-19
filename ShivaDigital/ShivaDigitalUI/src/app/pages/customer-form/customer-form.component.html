@@ -1,0 +1,10 @@
+<form [formGroup]="customerForm" (ngSubmit)="saveCustomer()" class="customer-form">
+    <input formControlName="cusomerName" placeholder="Customer Name" required />
+    <input formControlName="mobileNumber" placeholder="Mobile Number" required maxlength="10" />
+    <input formControlName="address" placeholder="Address" required />
+    <button type="submit" [disabled]="customerForm.invalid || loading">
+      {{ customer?.mgr_CustomerID ? 'Update' : 'Add' }}
+    </button>
+    <button type="button" (click)="onCancel()">Cancel</button>
+    <div *ngIf="error" class="error">{{ error }}</div>
+  </form>

@@ -1,0 +1,25 @@
+<div class="customer-list">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Mobile</th>
+          <th>Address</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of customers">
+          <td>{{ c.cusomerName }}</td>
+          <td>{{ c.mobileNumber }}</td>
+          <td>{{ c.address }}</td>
+          <td>
+            <button (click)="onEdit(c)">Edit</button>
+            <button (click)="onDelete(c.mgr_CustomerID)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="loading">Loading...</div>
+    <div *ngIf="error" class="error">{{ error }}</div>
+  </div>

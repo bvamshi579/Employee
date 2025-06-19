@@ -1,0 +1,15 @@
+<app-header></app-header>
+<div class="main-layout">
+  <ng-container *ngIf="!isLoginPage; else loginContent">
+    <app-sidenav *ngIf="sidenavVisible"></app-sidenav>
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+  </ng-container>
+  <ng-template #loginContent>
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+  </ng-template>
+</div>
+<app-footer></app-footer>

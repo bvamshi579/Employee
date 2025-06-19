@@ -1,0 +1,130 @@
+.sidenav {
+  height: 100%;
+  background: #f8fafc;
+  border-right: 1px solid #e0e0e0;
+  padding: 2rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 220px;
+  box-shadow: 2px 0 8px rgba(25, 118, 210, 0.04);
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+li {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+a {
+  color: #1976d2;
+  text-decoration: none;
+  font-size: 1.08rem;
+  font-weight: 500;
+  padding: 0.65rem 1.2rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: none;
+}
+
+a.active, a:hover {
+  background: linear-gradient(90deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+}
+
+.material-icons {
+  font-size: 1.3rem;
+  vertical-align: middle;
+  color: #90caf9;
+  transition: color 0.2s;
+}
+
+a.active .material-icons, a:hover .material-icons {
+  color: #1976d2;
+}
+
+.parent-link {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #333;
+  padding: 0.65rem 1.2rem 0.4rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  cursor: default;
+  user-select: none;
+}
+
+.collapsible-link {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #333;
+  padding: 0.65rem 1.2rem 0.4rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+  background: none;
+}
+
+.collapsible-link:hover, .collapsible-link:focus {
+  background: linear-gradient(90deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+}
+
+.collapse-arrow {
+  margin-left: auto;
+  transition: transform 0.2s, color 0.2s;
+  color: #90caf9;
+}
+.collapse-arrow.open {
+  transform: rotate(180deg);
+  color: #1976d2;
+}
+
+.child-links {
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  transition: max-height 0.2s, opacity 0.2s;
+}
+
+.child-links li {
+  margin-bottom: 0.2rem;
+}
+
+.child-links a {
+  font-size: 0.98rem;
+  font-weight: 400;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+}
+
+.child-links a.active, .child-links a:hover {
+  background: linear-gradient(90deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1976d2;
+}
+
+@media (max-width: 900px) {
+  .sidenav {
+    min-width: 160px;
+    padding: 1rem 0.2rem;
+  }
+  a, .collapsible-link {
+    font-size: 0.98rem;
+    padding: 0.5rem 0.7rem;
+  }
+}
