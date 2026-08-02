@@ -46,7 +46,8 @@ export const NAV_LINKS: NavLink[] = [
     children: [
       { label: 'Overview', route: '/dashboard/overview', icon: 'bar_chart' },
       { label: 'Reports', route: '/dashboard/reports', icon: 'insert_chart' },
-      { label: 'Customer', route: '/customer', icon: 'person' }
+      { label: 'Customer', route: '/customer', icon: 'person' },
+      { label: 'Bill', route: '/bill', icon: 'receipt' }
     ]
   },
   {

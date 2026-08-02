@@ -1,4 +1,4 @@
 <div class="customer-page">
   <app-customer-form (saved)="onSaved()" [customer]="selectedCustomer" (cancel)="onCancel()"></app-customer-form>
-  <app-customer-list (edit)="onEdit($event)" (deleted)="onSaved()"></app-customer-list>
+  <app-customer-list [refreshToken]="refreshToken" (edit)="onEdit($event)" (deleted)="onSaved()"></app-customer-list>
 </div>

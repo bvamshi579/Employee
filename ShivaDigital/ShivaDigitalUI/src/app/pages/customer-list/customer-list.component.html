@@ -1,25 +1,47 @@
 <div class="customer-list">
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Mobile</th>
-          <th>Address</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let c of customers">
-          <td>{{ c.cusomerName }}</td>
-          <td>{{ c.mobileNumber }}</td>
-          <td>{{ c.address }}</td>
-          <td>
-            <button (click)="onEdit(c)">Edit</button>
-            <button (click)="onDelete(c.mgr_CustomerID)">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <div *ngIf="loading">Loading...</div>
-    <div *ngIf="error" class="error">{{ error }}</div>
+  <div class="list-toolbar">
+    <div class="search-box">
+      <span>🔎</span>
+      <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="applyFilter()" placeholder="Search by name, mobile, address..." />
+    </div>
+    <div class="summary">{{ filteredCustomers.length }} customer(s)</div>
   </div>
+
+  <div class="pagination" *ngIf="filteredCustomers.length > pageSize">
+    <button type="button" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">Prev</button>
+    <span>Page {{ currentPage }} of {{ totalPages }}</span>
+    <button type="button" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">Next</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Actions</th>
+        <th>Name</th>
+        <th>Mobile</th>
+        <th>Address</th>
+        <th>PAN</th>
+        <th>Aadhaar</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of pagedCustomers">
+        <td>
+          <button type="button" class="edit-btn" (click)="onEdit(c)">Edit</button>
+          <!-- <button type="button" class="delete-btn" (click)="onDelete(c.CustomerID)">Delete</button> -->
+        </td>
+        <td>{{ c.CustomerName }}</td>
+        <td>{{ c.MobileNumber }}</td>
+        <td>{{ c.Address }}</td>
+        <td>{{ c.PanNumber }}</td>
+        <td>{{ c.AadharNumber }}</td>
+      </tr>
+      <tr *ngIf="!loading && pagedCustomers.length === 0">
+        <td colspan="6" class="empty-state">No customers match the current filter.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="loading">Loading...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+</div>

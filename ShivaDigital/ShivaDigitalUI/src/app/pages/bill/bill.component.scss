@@ -1,0 +1,364 @@
+.bill-page {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 1.2rem;
+}
+
+.card {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 30px rgba(25, 118, 210, 0.12);
+}
+
+.search-card {
+  margin-bottom: 1.25rem;
+}
+
+.header-card {
+  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 8px 20px rgba(25, 118, 210, 0.18);
+}
+
+.header-card.active {
+  background: linear-gradient(90deg, #0d47a1 0%, #1976d2 100%);
+}
+
+.header-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.9;
+}
+
+.header-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0.25rem 0;
+}
+
+.header-meta {
+  font-size: 0.92rem;
+  opacity: 0.95;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-group.wide {
+  grid-column: 1 / -1;
+}
+
+label {
+  font-weight: 600;
+  color: #0f3b66;
+}
+
+input, select, button {
+  border-radius: 10px;
+  border: 1px solid #dce6f5;
+  padding: 0.7rem 0.8rem;
+  font-size: 0.95rem;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
+}
+
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.suggestions button {
+  text-align: left;
+  background: #f4f8ff;
+  border: 1px solid #dce6f5;
+  cursor: pointer;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #1976d2;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+
+.empty-state {
+  margin-top: 0.8rem;
+  color: #5f6b7a;
+}
+
+.sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-top: 0.8rem;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 0.5rem; /* room for scrollbar */
+}
+
+.sheet-card {
+  border: 1px solid #dbe7f8;
+  border-radius: 14px;
+  padding: 0.9rem;
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(15, 59, 102, 0.06);
+}
+
+.sheet-name {
+  font-weight: 700;
+  color: #0f3b66;
+  margin-bottom: 0.55rem;
+}
+
+.sheet-card label {
+  font-size: 0.85rem;
+}
+
+.sheet-amount {
+  margin-top: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.bill-list {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.bill-list th, .bill-list td {
+  padding: 0.7rem;
+  border-bottom: 1px solid #edf2f7;
+  text-align: left;
+}
+
+.totals, .payment-box {
+  margin-top: 1rem;
+  background: #f8fbff;
+  border: 1px solid #e7eef8;
+  border-radius: 12px;
+  padding: 0.8rem;
+}
+
+.totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.totals > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0.85rem;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e4ecf6;
+}
+
+@media (max-width: 900px) {
+  .totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .totals {
+    grid-template-columns: 1fr;
+  }
+}
+
+.payment-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.actions button {
+  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.edit-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.edit-link:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.96);
+}
+
+.toast {
+  margin-top: 0.9rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.toast.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.toast.error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+.message {
+  margin-top: 0.7rem;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.field-error {
+  color: #d32f2f;
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.printable-bill {
+  display: none;
+  margin-top: 1.25rem;
+}
+
+.printable-bill-inner {
+  border: 1px solid #dbe7f8;
+  border-radius: 14px;
+  padding: 1rem;
+  background: #ffffff;
+}
+
+.print-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.print-table th,
+.print-table td {
+  border: 1px solid #dbe7f8;
+  padding: 0.6rem;
+  text-align: left;
+}
+
+.print-payments {
+  padding-left: 1.1rem;
+}
+
+@media (max-width: 1200px) {
+  .sheet-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .sheet-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-row {
+    flex-direction: column;
+  }
+
+  .print-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .printable-bill {
+    display: block !important;
+  }
+
+  .printable-bill-inner {
+    box-shadow: none;
+    border: 1px solid #cfd8e3;
+  }
+}

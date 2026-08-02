@@ -15,6 +15,7 @@ import { CustomerListComponent } from '../customer-list/customer-list.component'
 })
 export class CustomerComponent {
   selectedCustomer: Customer | null = null;
+  refreshToken = 0;
 
   onEdit(customer: Customer) {
     this.selectedCustomer = customer;
@@ -22,6 +23,7 @@ export class CustomerComponent {
 
   onSaved() {
     this.selectedCustomer = null;
+    this.refreshToken++;
   }
 
   onCancel() {

@@ -3,15 +3,17 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Customer {
-  mgr_CustomerID?: number;
-  cusomerName: string;
-  mobileNumber: string;
-  address: string;
+  CustomerID?: number;
+  CustomerName: string;
+  MobileNumber: string;
+  Address: string;
+  PanNumber?: string;
+  AadharNumber?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class CustomerService {
-  private apiUrl = 'http://localhost:36500/customers'; // Adjust if your API route differs
+  private apiUrl = 'http://localhost:3600/customers';
 
   constructor(private http: HttpClient) {}
 
@@ -28,7 +30,7 @@ export class CustomerService {
   }
 
   updateCustomer(customer: Customer): Observable<Customer> {
-    return this.http.put<Customer>(`${this.apiUrl}/${customer.mgr_CustomerID}`, customer);
+    return this.http.put<Customer>(`${this.apiUrl}/${customer.CustomerID}`, customer);
   }
 
   deleteCustomer(id: number): Observable<void> {

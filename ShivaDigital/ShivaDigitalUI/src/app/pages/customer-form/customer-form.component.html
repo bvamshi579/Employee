@@ -1,10 +1,51 @@
 <form [formGroup]="customerForm" (ngSubmit)="saveCustomer()" class="customer-form">
-    <input formControlName="cusomerName" placeholder="Customer Name" required />
-    <input formControlName="mobileNumber" placeholder="Mobile Number" required maxlength="10" />
-    <input formControlName="address" placeholder="Address" required />
-    <button type="submit" [disabled]="customerForm.invalid || loading">
-      {{ customer?.mgr_CustomerID ? 'Update' : 'Add' }}
+  <div class="form-header">
+    <h3>{{ customer?.CustomerID ? 'Edit Customer' : 'Add Customer' }}</h3>
+    <p>Fill in the details below to save the customer record.</p>
+  </div>
+
+  <div class="field-group">
+    <input formControlName="CustomerName" placeholder="Customer Name" />
+    <div class="error-text" *ngIf="customerForm.get('CustomerName')?.invalid && (customerForm.get('CustomerName')?.touched || customerForm.get('CustomerName')?.dirty || submitAttempted)">
+      Customer name must be at least 3 characters.
+    </div>
+  </div>
+
+  <div class="field-group">
+    <input formControlName="MobileNumber" placeholder="Mobile Number" maxlength="10" />
+    <div class="error-text" *ngIf="customerForm.get('MobileNumber')?.invalid && (customerForm.get('MobileNumber')?.touched || customerForm.get('MobileNumber')?.dirty || submitAttempted)">
+      Enter a valid 10-digit mobile number.
+    </div>
+  </div>
+
+  <div class="field-group">
+    <input formControlName="Address" placeholder="Address" />
+    <div class="error-text" *ngIf="customerForm.get('Address')?.invalid && (customerForm.get('Address')?.touched || customerForm.get('Address')?.dirty || submitAttempted)">
+      Address must be at least 5 characters.
+    </div>
+  </div>
+
+  <div class="field-group">
+    <input formControlName="PanNumber" placeholder="PAN Number" />
+    <div class="error-text" *ngIf="customerForm.get('PanNumber')?.invalid && (customerForm.get('PanNumber')?.touched || customerForm.get('PanNumber')?.dirty || submitAttempted)">
+      Enter a valid PAN format like ABCDE1234F.
+    </div>
+  </div>
+
+  <div class="field-group">
+    <input formControlName="AadharNumber" placeholder="Aadhaar Number" maxlength="12" />
+    <div class="error-text" *ngIf="customerForm.get('AadharNumber')?.invalid && (customerForm.get('AadharNumber')?.touched || customerForm.get('AadharNumber')?.dirty || submitAttempted)">
+      Enter a valid 12-digit Aadhaar number.
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="submit" [disabled]="loading">
+      {{ customer?.CustomerID ? 'Update' : 'Add' }}
     </button>
     <button type="button" (click)="onCancel()">Cancel</button>
-    <div *ngIf="error" class="error">{{ error }}</div>
-  </form>
+  </div>
+
+  <div *ngIf="toastMessage" class="toast" [ngClass]="toastType">{{ toastMessage }}</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+</form>

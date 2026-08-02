@@ -1,0 +1,433 @@
+using System.Data;
+using System.Linq;
+using Microsoft.Data.SqlClient;
+using ShivaDigital_API.Models;
+
+namespace ShivaDigital_API.Data;
+
+public class BillRepository
+{
+    private readonly string _connectionString;
+
+    public BillRepository(IConfiguration configuration)
+    {
+        _connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
+    }
+
+    public async Task<List<Bill>> GetAllAsync()
+    {
+        var result = new List<Bill>();
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(@"
+            SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType
+            FROM dbo.vvtblBill b
+            LEFT JOIN dbo.vvtblCustomers c ON c.CustomerID = b.CustomerID
+            ORDER BY b.BillID", connection);
+        await using var reader = await command.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            result.Add(new Bill
+            {
+                BillID = reader.IsDBNull(reader.GetOrdinal("BillID")) ? null : reader.GetInt32(reader.GetOrdinal("BillID")),
+                CustomerID = reader.IsDBNull(reader.GetOrdinal("CustomerID")) ? null : reader.GetInt32(reader.GetOrdinal("CustomerID")),
+                CustomerName = reader.IsDBNull(reader.GetOrdinal("CustomerName")) ? null : reader.GetString(reader.GetOrdinal("CustomerName")),
+                MobileNumber = reader.IsDBNull(reader.GetOrdinal("MobileNumber")) ? null : reader.GetString(reader.GetOrdinal("MobileNumber")),
+                BillDate = reader.IsDBNull(reader.GetOrdinal("BillDate")) ? null : reader.GetDateTime(reader.GetOrdinal("BillDate")),
+                Files = reader.IsDBNull(reader.GetOrdinal("Files")) ? null : reader.GetString(reader.GetOrdinal("Files")),
+                FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize")) ? null : reader.GetInt32(reader.GetOrdinal("FileSize")),
+                BookingTime = reader.IsDBNull(reader.GetOrdinal("BookingTime")) ? null : reader.GetDateTime(reader.GetOrdinal("BookingTime")),
+                DeliveryTime = reader.IsDBNull(reader.GetOrdinal("DeliveryTime")) ? null : reader.GetDateTime(reader.GetOrdinal("DeliveryTime")),
+                Total = reader.IsDBNull(reader.GetOrdinal("Total")) ? null : reader.GetDouble(reader.GetOrdinal("Total")),
+                Advance = reader.IsDBNull(reader.GetOrdinal("Advance")) ? null : reader.GetDouble(reader.GetOrdinal("Advance")),
+                BalancePaid = reader.IsDBNull(reader.GetOrdinal("BalancePaid")) ? null : reader.GetInt32(reader.GetOrdinal("BalancePaid")),
+                Discount = reader.IsDBNull(reader.GetOrdinal("Discount")) ? null : reader.GetInt32(reader.GetOrdinal("Discount")),
+                BillType = reader.IsDBNull(reader.GetOrdinal("BillType")) ? null : reader.GetString(reader.GetOrdinal("BillType"))
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<List<Bill>> SearchAsync(DateTime? fromDate, DateTime? toDate)
+    {
+        var result = new List<Bill>();
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(@"
+            SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType
+            FROM dbo.vvtblBill b
+            LEFT JOIN dbo.vvtblCustomers c ON c.CustomerID = b.CustomerID
+            WHERE (@FromDate IS NULL OR CAST(b.BillDate AS date) >= CAST(@FromDate AS date))
+              AND (@ToDate IS NULL OR CAST(b.BillDate AS date) <= CAST(@ToDate AS date))
+            ORDER BY b.BillID DESC", connection);
+
+        command.Parameters.Add("@FromDate", SqlDbType.Date).Value = (object?)(fromDate ?? (object)DBNull.Value) ?? DBNull.Value;
+        command.Parameters.Add("@ToDate", SqlDbType.Date).Value = (object?)(toDate ?? (object)DBNull.Value) ?? DBNull.Value;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            result.Add(new Bill
+            {
+                BillID = reader.IsDBNull(reader.GetOrdinal("BillID")) ? null : reader.GetInt32(reader.GetOrdinal("BillID")),
+                CustomerID = reader.IsDBNull(reader.GetOrdinal("CustomerID")) ? null : reader.GetInt32(reader.GetOrdinal("CustomerID")),
+                CustomerName = reader.IsDBNull(reader.GetOrdinal("CustomerName")) ? null : reader.GetString(reader.GetOrdinal("CustomerName")),
+                MobileNumber = reader.IsDBNull(reader.GetOrdinal("MobileNumber")) ? null : reader.GetString(reader.GetOrdinal("MobileNumber")),
+                BillDate = reader.IsDBNull(reader.GetOrdinal("BillDate")) ? null : reader.GetDateTime(reader.GetOrdinal("BillDate")),
+                Files = reader.IsDBNull(reader.GetOrdinal("Files")) ? null : reader.GetString(reader.GetOrdinal("Files")),
+                FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize")) ? null : reader.GetInt32(reader.GetOrdinal("FileSize")),
+                BookingTime = reader.IsDBNull(reader.GetOrdinal("BookingTime")) ? null : reader.GetDateTime(reader.GetOrdinal("BookingTime")),
+                DeliveryTime = reader.IsDBNull(reader.GetOrdinal("DeliveryTime")) ? null : reader.GetDateTime(reader.GetOrdinal("DeliveryTime")),
+                Total = reader.IsDBNull(reader.GetOrdinal("Total")) ? null : reader.GetDouble(reader.GetOrdinal("Total")),
+                Advance = reader.IsDBNull(reader.GetOrdinal("Advance")) ? null : reader.GetDouble(reader.GetOrdinal("Advance")),
+                BalancePaid = reader.IsDBNull(reader.GetOrdinal("BalancePaid")) ? null : reader.GetInt32(reader.GetOrdinal("BalancePaid")),
+                Discount = reader.IsDBNull(reader.GetOrdinal("Discount")) ? null : reader.GetInt32(reader.GetOrdinal("Discount")),
+                BillType = reader.IsDBNull(reader.GetOrdinal("BillType")) ? null : reader.GetString(reader.GetOrdinal("BillType"))
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<List<SheetOption>> GetSheetsAsync(string sheetType)
+    {
+        var result = new List<SheetOption>();
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(@"
+            SELECT ID, Name, Amount, SheetType
+            FROM dbo.vvtblSheets
+            WHERE SheetType = @SheetType
+            ORDER BY DisplayOrder, Name", connection);
+        command.Parameters.Add("@SheetType", SqlDbType.VarChar, 20).Value = sheetType;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            result.Add(new SheetOption
+            {
+                SheetTypeID = reader.IsDBNull(reader.GetOrdinal("ID")) ? null : reader.GetInt32(reader.GetOrdinal("ID")),
+                Name = reader.IsDBNull(reader.GetOrdinal("Name")) ? null : reader.GetString(reader.GetOrdinal("Name")),
+                Amount = reader.IsDBNull(reader.GetOrdinal("Amount")) ? null : reader.GetDouble(reader.GetOrdinal("Amount")),
+                SheetType = reader.IsDBNull(reader.GetOrdinal("SheetType")) ? null : reader.GetString(reader.GetOrdinal("SheetType"))
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<List<FileSizeOption>> GetFileSizesAsync()
+    {
+        var result = new List<FileSizeOption>();
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand("SELECT ID, FileSize FROM dbo.vvtblFileSize ORDER BY FileSize", connection);
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            result.Add(new FileSizeOption
+            {
+                ID = reader.IsDBNull(reader.GetOrdinal("ID")) ? null : reader.GetInt32(reader.GetOrdinal("ID")),
+                FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize")) ? null : reader.GetString(reader.GetOrdinal("FileSize"))
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<Bill> CreateAsync(Bill model)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        model.BillDate ??= DateTime.Now;
+        model.BookingTime ??= DateTime.Now;
+        model.DeliveryTime ??= DateTime.Now.AddDays(1);
+        model.Total ??= 0;
+        model.Advance ??= 0;
+        model.BalancePaid ??= 0;
+        model.Discount ??= 0;
+        model.BillType ??= "Standard";
+        UpdateComputedPaymentTotals(model);
+
+        await using var command = new SqlCommand(@"
+            INSERT INTO dbo.vvtblBill (CustomerID, BillDate, Files, FileSize, BookingTime, DeliveryTime, Total, Advance, BalancePaid, Discount, BillType)
+            VALUES (@CustomerID, @BillDate, @Files, @FileSize, @BookingTime, @DeliveryTime, @Total, @Advance, @BalancePaid, @Discount, @BillType)
+            select cast(SCOPE_IDENTITY() as int)
+            ", connection);
+
+        command.Parameters.Add("@CustomerID", SqlDbType.Int).Value = (model.CustomerID ?? 0);
+        command.Parameters.Add("@BillDate", SqlDbType.Date).Value = (model.BillDate ?? DateTime.Now);
+        command.Parameters.Add("@Files", SqlDbType.VarChar, 100).Value = (object?)(model.Files ?? string.Empty) ?? DBNull.Value;
+        command.Parameters.Add("@FileSize", SqlDbType.Int).Value = (model.FileSize ?? 0);
+        command.Parameters.Add("@BookingTime", SqlDbType.DateTime).Value = (model.BookingTime ?? DateTime.Now);
+        command.Parameters.Add("@DeliveryTime", SqlDbType.DateTime).Value = (model.DeliveryTime ?? DateTime.Now.AddDays(1));
+        command.Parameters.Add("@Total", SqlDbType.Float).Value = (model.Total ?? 0);
+        command.Parameters.Add("@Advance", SqlDbType.Float).Value = (model.Advance ?? 0);
+        command.Parameters.Add("@BalancePaid", SqlDbType.Int).Value = (model.BalancePaid ?? 0);
+        command.Parameters.Add("@Discount", SqlDbType.Int).Value = (model.Discount ?? 0);
+        command.Parameters.Add("@BillType", SqlDbType.VarChar, 20).Value = (object?)(model.BillType ?? "Standard") ?? DBNull.Value;
+
+        var idObj = await command.ExecuteScalarAsync();
+        if (idObj is not null && idObj != DBNull.Value)
+        {
+            model.BillID = Convert.ToInt32(idObj);
+        }
+        else
+        {
+            model.BillID = 0;
+        }
+
+        if (model.Lines is { Count: > 0 })
+        {
+            foreach (var line in model.Lines)
+            {
+                if (line.Quantity is null || line.Quantity <= 0) continue;
+                await using var lineCommand = new SqlCommand(@"
+                    INSERT INTO dbo.vvtblBillDetails (BillID, SheetTypeID, Quanity, Price, Amount)
+                    VALUES (@BillID, @SheetTypeID, @Quanity, @Price, @Amount)", connection);
+                lineCommand.Parameters.Add("@BillID", SqlDbType.Int).Value = model.BillID ?? 0;
+                lineCommand.Parameters.Add("@SheetTypeID", SqlDbType.Int).Value = line.SheetTypeID ?? 0;
+                lineCommand.Parameters.Add("@Quanity", SqlDbType.Int).Value = line.Quantity ?? 0;
+                lineCommand.Parameters.Add("@Price", SqlDbType.Int).Value = (int)(line.Price ?? 0);
+                lineCommand.Parameters.Add("@Amount", SqlDbType.Float).Value = (line.Amount ?? 0);
+                await lineCommand.ExecuteNonQueryAsync();
+            }
+        }
+
+        if (model.AdvancePayments is { Count: > 0 })
+        {
+            foreach (var payment in model.AdvancePayments)
+            {
+                if (payment.AmountPaid is null || payment.AmountPaid <= 0) continue;
+                await using var paymentCommand = new SqlCommand(@"
+                    INSERT INTO dbo.vvtblBillPayment (BillID, PaymentDate, AmountPaid, BillLogID)
+                    VALUES (@BillID, @PaymentDate, @AmountPaid, @BillLogID)", connection);
+                paymentCommand.Parameters.Add("@BillID", SqlDbType.Int).Value = model.BillID ?? 0;
+                paymentCommand.Parameters.Add("@PaymentDate", SqlDbType.DateTime).Value = payment.PaymentDate ?? DateTime.Now;
+                paymentCommand.Parameters.Add("@AmountPaid", SqlDbType.Int).Value = payment.AmountPaid ?? 0;
+                paymentCommand.Parameters.Add("@BillLogID", SqlDbType.Int).Value = payment.BillLogID ?? 0;
+                await paymentCommand.ExecuteNonQueryAsync();
+            }
+        }
+
+        // return the full bill (with customer name, lines, payments)
+        return await GetByIdAsync(model.BillID ?? 0) ?? model;
+    }
+
+    public async Task<Bill> UpdateAsync(Bill model)
+    {
+        if (model.BillID is null) throw new InvalidOperationException("BillID is required to update a bill.");
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        UpdateComputedPaymentTotals(model);
+
+        await using var command = new SqlCommand(@"
+            UPDATE dbo.vvtblBill
+            SET CustomerID = @CustomerID,
+                BillDate = @BillDate,
+                Files = @Files,
+                FileSize = @FileSize,
+                BookingTime = @BookingTime,
+                DeliveryTime = @DeliveryTime,
+                Total = @Total,
+                Advance = @Advance,
+                BalancePaid = @BalancePaid,
+                Discount = @Discount,
+                BillType = @BillType
+            WHERE BillID = @BillID", connection);
+
+        command.Parameters.Add("@BillID", SqlDbType.Int).Value = model.BillID ?? 0;
+        command.Parameters.Add("@CustomerID", SqlDbType.Int).Value = (model.CustomerID ?? 0);
+        command.Parameters.Add("@BillDate", SqlDbType.Date).Value = (model.BillDate ?? DateTime.Now);
+        command.Parameters.Add("@Files", SqlDbType.VarChar, 100).Value = (object?)(model.Files ?? string.Empty) ?? DBNull.Value;
+        command.Parameters.Add("@FileSize", SqlDbType.Int).Value = (model.FileSize ?? 0);
+        command.Parameters.Add("@BookingTime", SqlDbType.DateTime).Value = (model.BookingTime ?? DateTime.Now);
+        command.Parameters.Add("@DeliveryTime", SqlDbType.DateTime).Value = (model.DeliveryTime ?? DateTime.Now.AddDays(1));
+        command.Parameters.Add("@Total", SqlDbType.Float).Value = (model.Total ?? 0);
+        command.Parameters.Add("@Advance", SqlDbType.Float).Value = (model.Advance ?? 0);
+        command.Parameters.Add("@BalancePaid", SqlDbType.Int).Value = (model.BalancePaid ?? 0);
+        command.Parameters.Add("@Discount", SqlDbType.Int).Value = (model.Discount ?? 0);
+        command.Parameters.Add("@BillType", SqlDbType.VarChar, 20).Value = (object?)(model.BillType ?? "Standard") ?? DBNull.Value;
+
+        await command.ExecuteNonQueryAsync();
+
+        // delete existing details and payments
+        await using (var delDetails = new SqlCommand("DELETE FROM dbo.vvtblBillDetails WHERE BillID = @BillID", connection))
+        {
+            delDetails.Parameters.Add("@BillID", SqlDbType.Int).Value = model.BillID ?? 0;
+            await delDetails.ExecuteNonQueryAsync();
+        }
+
+        await using (var delPayments = new SqlCommand("DELETE FROM dbo.vvtblBillPayment WHERE BillID = @BillID", connection))
+        {
+            delPayments.Parameters.Add("@BillID", SqlDbType.Int).Value = model.BillID ?? 0;
+            await delPayments.ExecuteNonQueryAsync();
+        }
+
+        // reinsert lines
+        if (model.Lines is { Count: > 0 })
+        {
+            foreach (var line in model.Lines)
+            {
+                if (line.Quantity is null || line.Quantity <= 0) continue;
+                await using var lineCommand = new SqlCommand(@"
+                    INSERT INTO dbo.vvtblBillDetails (BillID, SheetTypeID, Quanity, Price, Amount)
+                    VALUES (@BillID, @SheetTypeID, @Quanity, @Price, @Amount)", connection);
+                lineCommand.Parameters.Add("@BillID", SqlDbType.Int).Value = model.BillID ?? 0;
+                lineCommand.Parameters.Add("@SheetTypeID", SqlDbType.Int).Value = line.SheetTypeID ?? 0;
+                lineCommand.Parameters.Add("@Quanity", SqlDbType.Int).Value = line.Quantity ?? 0;
+                lineCommand.Parameters.Add("@Price", SqlDbType.Int).Value = (int)(line.Price ?? 0);
+                lineCommand.Parameters.Add("@Amount", SqlDbType.Float).Value = (line.Amount ?? 0);
+                await lineCommand.ExecuteNonQueryAsync();
+            }
+        }
+
+        // reinsert payments
+        if (model.AdvancePayments is { Count: > 0 })
+        {
+            foreach (var payment in model.AdvancePayments)
+            {
+                if (payment.AmountPaid is null || payment.AmountPaid <= 0) continue;
+                await using var paymentCommand = new SqlCommand(@"
+                    INSERT INTO dbo.vvtblBillPayment (BillID, PaymentDate, AmountPaid, BillLogID)
+                    VALUES (@BillID, @PaymentDate, @AmountPaid, @BillLogID)", connection);
+                paymentCommand.Parameters.Add("@BillID", SqlDbType.Int).Value = model.BillID ?? 0;
+                paymentCommand.Parameters.Add("@PaymentDate", SqlDbType.DateTime).Value = payment.PaymentDate ?? DateTime.Now;
+                paymentCommand.Parameters.Add("@AmountPaid", SqlDbType.Int).Value = payment.AmountPaid ?? 0;
+                paymentCommand.Parameters.Add("@BillLogID", SqlDbType.Int).Value = payment.BillLogID ?? 0;
+                await paymentCommand.ExecuteNonQueryAsync();
+            }
+        }
+
+        // return the full, up-to-date bill
+        return await GetByIdAsync(model.BillID ?? 0) ?? model;
+    }
+
+    public async Task<Bill?> AddPaymentAsync(int billId, int amount, DateTime? paymentDate = null)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(@"
+            INSERT INTO dbo.vvtblBillPayment (BillID, PaymentDate, AmountPaid, BillLogID)
+            VALUES (@BillID, @PaymentDate, @AmountPaid, @BillLogID)", connection);
+
+        command.Parameters.Add("@BillID", SqlDbType.Int).Value = billId;
+        command.Parameters.Add("@PaymentDate", SqlDbType.DateTime).Value = paymentDate ?? DateTime.Now;
+        command.Parameters.Add("@AmountPaid", SqlDbType.Int).Value = amount;
+        command.Parameters.Add("@BillLogID", SqlDbType.Int).Value = 0;
+        await command.ExecuteNonQueryAsync();
+
+        return await GetByIdAsync(billId);
+    }
+
+    public async Task<Bill?> GetByIdAsync(int id)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        Bill? bill = null;
+
+        await using var command = new SqlCommand(@"
+            SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType
+            FROM dbo.vvtblBill b
+            LEFT JOIN dbo.vvtblCustomers c ON c.CustomerID = b.CustomerID
+            WHERE b.BillID = @BillID", connection);
+        command.Parameters.Add("@BillID", SqlDbType.Int).Value = id;
+
+        await using (var reader = await command.ExecuteReaderAsync())
+        {
+            if (await reader.ReadAsync())
+            {
+                bill = new Bill
+                {
+                    BillID = reader.IsDBNull(reader.GetOrdinal("BillID")) ? null : reader.GetInt32(reader.GetOrdinal("BillID")),
+                    CustomerID = reader.IsDBNull(reader.GetOrdinal("CustomerID")) ? null : reader.GetInt32(reader.GetOrdinal("CustomerID")),
+                    CustomerName = reader.IsDBNull(reader.GetOrdinal("CustomerName")) ? null : reader.GetString(reader.GetOrdinal("CustomerName")),
+                    MobileNumber = reader.IsDBNull(reader.GetOrdinal("MobileNumber")) ? null : reader.GetString(reader.GetOrdinal("MobileNumber")),
+                    BillDate = reader.IsDBNull(reader.GetOrdinal("BillDate")) ? null : reader.GetDateTime(reader.GetOrdinal("BillDate")),
+                    Files = reader.IsDBNull(reader.GetOrdinal("Files")) ? null : reader.GetString(reader.GetOrdinal("Files")),
+                    FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize")) ? null : reader.GetInt32(reader.GetOrdinal("FileSize")),
+                    BookingTime = reader.IsDBNull(reader.GetOrdinal("BookingTime")) ? null : reader.GetDateTime(reader.GetOrdinal("BookingTime")),
+                    DeliveryTime = reader.IsDBNull(reader.GetOrdinal("DeliveryTime")) ? null : reader.GetDateTime(reader.GetOrdinal("DeliveryTime")),
+                    Total = reader.IsDBNull(reader.GetOrdinal("Total")) ? null : (double?)Convert.ToDouble(reader.GetValue(reader.GetOrdinal("Total"))),
+                    Advance = reader.IsDBNull(reader.GetOrdinal("Advance")) ? null : (double?)Convert.ToDouble(reader.GetValue(reader.GetOrdinal("Advance"))),
+                    BalancePaid = reader.IsDBNull(reader.GetOrdinal("BalancePaid")) ? null : reader.GetInt32(reader.GetOrdinal("BalancePaid")),
+                    Discount = reader.IsDBNull(reader.GetOrdinal("Discount")) ? null : reader.GetInt32(reader.GetOrdinal("Discount")),
+                    BillType = reader.IsDBNull(reader.GetOrdinal("BillType")) ? null : reader.GetString(reader.GetOrdinal("BillType"))
+                };
+            }
+        }
+
+        if (bill == null) return null;
+
+        // load lines
+        bill.Lines = new List<BillLine>();
+        await using (var linesCmd = new SqlCommand(@"SELECT SheetTypeID, Quanity, Price, Amount FROM dbo.vvtblBillDetails WHERE BillID = @BillID", connection))
+        {
+            linesCmd.Parameters.Add("@BillID", SqlDbType.Int).Value = bill.BillID ?? 0;
+            await using var lr = await linesCmd.ExecuteReaderAsync();
+            while (await lr.ReadAsync())
+            {
+                bill.Lines.Add(new BillLine
+                {
+                    SheetTypeID = lr.IsDBNull(lr.GetOrdinal("SheetTypeID")) ? null : lr.GetInt32(lr.GetOrdinal("SheetTypeID")),
+                    Quantity = lr.IsDBNull(lr.GetOrdinal("Quanity")) ? null : lr.GetInt32(lr.GetOrdinal("Quanity")),
+                    Price = lr.IsDBNull(lr.GetOrdinal("Price")) ? null : (double?)Convert.ToDouble(lr.GetValue(lr.GetOrdinal("Price"))),
+                    Amount = lr.IsDBNull(lr.GetOrdinal("Amount")) ? null : (double?)Convert.ToDouble(lr.GetValue(lr.GetOrdinal("Amount")))
+                });
+            }
+        }
+
+        // load payments
+        bill.AdvancePayments = new List<BillPayment>();
+        await using (var payCmd = new SqlCommand(@"SELECT BillPaymentID, BillID, PaymentDate, AmountPaid, BillLogID FROM dbo.vvtblBillPayment WHERE BillID = @BillID", connection))
+        {
+            payCmd.Parameters.Add("@BillID", SqlDbType.Int).Value = bill.BillID ?? 0;
+            await using var pr = await payCmd.ExecuteReaderAsync();
+            while (await pr.ReadAsync())
+            {
+                bill.AdvancePayments.Add(new BillPayment
+                {
+                    BillPaymentID = pr.IsDBNull(pr.GetOrdinal("BillPaymentID")) ? null : pr.GetInt32(pr.GetOrdinal("BillPaymentID")),
+                    BillID = pr.IsDBNull(pr.GetOrdinal("BillID")) ? null : pr.GetInt32(pr.GetOrdinal("BillID")),
+                    PaymentDate = pr.IsDBNull(pr.GetOrdinal("PaymentDate")) ? null : pr.GetDateTime(pr.GetOrdinal("PaymentDate")),
+                    AmountPaid = pr.IsDBNull(pr.GetOrdinal("AmountPaid")) ? null : pr.GetInt32(pr.GetOrdinal("AmountPaid")),
+                    BillLogID = pr.IsDBNull(pr.GetOrdinal("BillLogID")) ? null : pr.GetInt32(pr.GetOrdinal("BillLogID"))
+                });
+            }
+        }
+
+        UpdateComputedPaymentTotals(bill);
+        return bill;
+    }
+
+    private static void UpdateComputedPaymentTotals(Bill model)
+    {
+        var totalPaid = model.AdvancePayments?.Where(p => p.AmountPaid.HasValue).Sum(p => p.AmountPaid.Value) ?? 0;
+        model.BalancePaid = totalPaid;
+
+        if (model.BookingTime is null)
+        {
+            model.Advance = 0;
+            return;
+        }
+
+        var bookingDate = model.BookingTime.Value.Date;
+        var sameDayAdvance = model.AdvancePayments?
+            .Where(p => p.AmountPaid.HasValue && p.PaymentDate.HasValue && p.PaymentDate.Value.Date == bookingDate)
+            .Sum(p => p.AmountPaid.Value) ?? 0;
+
+        model.Advance = sameDayAdvance;
+    }
+}

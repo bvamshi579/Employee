@@ -1,0 +1,246 @@
+<div class="bill-page">
+  <div class="card no-print search-card">
+    <h3>Search Bills by Booking Date</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>From date</label>
+        <input type="date" [(ngModel)]="searchFromDate" />
+      </div>
+      <div class="form-group">
+        <label>To date</label>
+        <input type="date" [(ngModel)]="searchToDate" />
+      </div>
+      <div class="form-group">
+        <label>&nbsp;</label>
+        <button type="button" (click)="loadSearchBills()">Search</button>
+      </div>
+    </div>
+
+    <div *ngIf="searchLoading" class="message">Loading bills...</div>
+    <div *ngIf="searchError" class="field-error">{{ searchError }}</div>
+
+    <div class="table-wrap" *ngIf="searchBills.length">
+      <table class="bill-list no-print">
+        <thead>
+          <tr>
+            <th>Bill ID</th>
+            <th>Customer</th>
+            <th>Mobile</th>
+            <th>Bill Date</th>
+            <th>Total</th>
+            <th>Discount</th>
+            <th>Payable</th>
+            <th>Total Paid</th>
+            <th>Balance Due</th>
+            <th>Advance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let bill of searchBills">
+            <td><button type="button" class="link-button" (click)="selectPaymentBill(bill)">{{ bill.BillID }}</button></td>
+            <td>{{ bill.CustomerName }}</td>
+            <td>{{ bill.MobileNumber }}</td>
+            <td>{{ bill.BillDate | date:'dd/MM/yyyy' }}</td>
+            <td>{{ bill.Total | number:'1.0-0' }}</td>
+            <td>{{ bill.Discount | number:'1.0-0' }}</td>
+            <td>{{ getPayable(bill) | number:'1.0-0' }}</td>
+            <td>{{ getTotalPaid(bill) | number:'1.0-0' }}</td>
+            <td>{{ getBalanceDue(bill) | number:'1.0-0' }}</td>
+            <td>{{ bill.Advance | number:'1.0-0' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="empty-state" *ngIf="!searchLoading && !searchBills.length">
+      No bills found for the selected date range.
+    </div>
+
+    <div class="payment-box" *ngIf="selectedPaymentBill">
+      <h4>Payments for Bill #{{ selectedPaymentBill.BillID }}</h4>
+      <div class="payment-row">
+        <input type="number" [(ngModel)]="paymentAmountForBill" placeholder="Amount paid" />
+        <button type="button" (click)="addPaymentToSelectedBill()">Add payment</button>
+      </div>
+      <div *ngIf="paymentMessage" class="toast success">{{ paymentMessage }}</div>
+      <div *ngIf="paymentError" class="field-error">{{ paymentError }}</div>
+    </div>
+  </div>
+
+  <h3>Create Bill</h3>
+
+  <div class="card no-print">
+    <div class="header-card" [class.active]="selectedCustomerName">
+      <div class="header-title">Customer</div>
+      <div class="header-name">{{ selectedCustomerName || 'No customer selected' }}</div>
+      <div class="header-meta">{{ selectedCustomerName ? 'Bill is ready for this customer' : 'Search by name or mobile above' }}</div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group wide">
+        <label>Search customer by name or mobile</label>
+        <input [(ngModel)]="customerSearch" (ngModelChange)="filterCustomers()" placeholder="Type name or mobile" />
+        <div class="field-error" *ngIf="fieldErrors.customer">{{ fieldErrors.customer }}</div>
+        <div class="suggestions" *ngIf="customerSearch.length >= 3 && filteredCustomers.length">
+          <button type="button" *ngFor="let customer of filteredCustomers" (click)="selectCustomer(customer)">
+            {{ customer.CustomerName }} — {{ customer.MobileNumber }}
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Files</label>
+        <input [(ngModel)]="files" />
+        <div class="field-error" *ngIf="fieldErrors.files">{{ fieldErrors.files }}</div>
+      </div>
+
+      <div class="form-group">
+        <label>File Size</label>
+        <select [(ngModel)]="fileSize">
+            <option [ngValue]="''">Select file size</option>
+            <option *ngFor="let item of fileSizes" [ngValue]="item.ID">{{ item.FileSize }}</option>
+          </select>
+        <div class="field-error" *ngIf="fieldErrors.fileSize">{{ fieldErrors.fileSize }}</div>
+      </div>
+
+      <div class="form-group">
+        <label>Booking Time</label>
+        <input type="datetime-local" [(ngModel)]="bookingTime" disabled />
+        <div class="field-error" *ngIf="fieldErrors.bookingTime">{{ fieldErrors.bookingTime }}</div>
+      </div>
+
+      <div class="form-group">
+        <label>Delivery Time</label>
+        <input type="datetime-local" [(ngModel)]="deliveryTime" />
+        <div class="field-error" *ngIf="fieldErrors.deliveryTime">{{ fieldErrors.deliveryTime }}</div>
+      </div>
+
+      <div class="form-group">
+        <label>Discount</label>
+        <input type="number" [(ngModel)]="discount" (ngModelChange)="recalculateTotals()" />
+      </div>
+    </div>
+
+    <h4>Lab Sheets</h4>
+    <div class="sheet-grid">
+      <div class="sheet-card" *ngFor="let line of lines; trackBy: trackBySheetType">
+        <div class="sheet-name">{{ line.SheetName }}</div>
+        <label>Qty</label>
+        <input type="number" min="0" [(ngModel)]="line.Quantity" (ngModelChange)="onQuantityInput(line)" />
+        <div class="sheet-amount">
+          <span>Amount</span>
+          <strong>{{ line.Amount | number:'1.0-0' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-error" *ngIf="fieldErrors.lines">{{ fieldErrors.lines }}</div>
+
+    <div class="totals">
+      <div><strong>Total:</strong> {{ subtotal | number:'1.0-0' }}</div>
+      <div><strong>Discount:</strong> {{ discount | number:'1.0-0' }}</div>
+      <div><strong>Total Payable:</strong> {{ payable | number:'1.0-0' }}</div>
+      <div><strong>Advance:</strong> {{ advance | number:'1.0-0' }}</div>
+      <div><strong>Total Paid:</strong> {{ balancePaid | number:'1.0-0' }}</div>
+      <div><strong>Balance Due:</strong> {{ due | number:'1.0-0' }}</div>
+    </div>
+
+    <div class="payment-box">
+      <h4>Payments</h4>
+      <div class="payment-row">
+        <input type="number" [(ngModel)]="paymentAmount" placeholder="Amount paid" />
+        <button type="button" (click)="addPayment()">Add payment</button>
+      </div>
+      <ul>
+        <li *ngFor="let payment of payments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'short' }}</li>
+      </ul>
+    </div>
+
+    <div class="actions">
+      <button *ngIf="isEditMode" type="button" class="print-btn" (click)="printBill()">Print Bill</button>
+      <button type="button" (click)="saveBill()">Save Bill</button>
+    </div>
+
+    <div *ngIf="toastMessage" class="toast" [ngClass]="toastType">{{ toastMessage }}</div>
+    <div *ngIf="message" class="message">{{ message }}</div>
+  </div>
+
+  <div class="printable-bill">
+    <div class="printable-bill-inner">
+      <h3>Bill Preview</h3>
+      <div class="print-meta-grid">
+        <div><strong>Bill ID:</strong> {{ currentBillId !== null ? currentBillId : 'New' }}</div>
+        <div><strong>Customer:</strong> {{ selectedCustomerName || 'Not selected' }}</div>
+        <div><strong>Files:</strong> {{ files || '—' }}</div>
+        <div><strong>File Size:</strong> {{ printableFileSize || '—' }}</div>
+        <div><strong>Booking Time:</strong> {{ printableBooking ? (printableBooking | date:'dd/MM/yyyy hh:mm a') : '—' }}</div>
+        <div><strong>Delivery Time:</strong> {{ printableDelivery ? (printableDelivery | date:'dd/MM/yyyy hh:mm a') : '—' }}</div>
+        <div><strong>Total:</strong> {{ total | number:'1.0-0' }}</div>
+        <div><strong>Discount:</strong> {{ discount | number:'1.0-0' }}</div>
+        <div><strong>Total Payable:</strong> {{ payable | number:'1.0-0' }}</div>
+        <div><strong>Total Paid:</strong> {{ balancePaid | number:'1.0-0' }}</div>
+        <div><strong>Balance Due:</strong> {{ due | number:'1.0-0' }}</div>
+        <div><strong>Advance:</strong> {{ advance | number:'1.0-0' }}</div>
+      </div>
+
+      <h4>Sheets</h4>
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th>Sheet</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let line of printableLines">
+            <td>{{ line.SheetName }}</td>
+            <td>{{ line.Quantity }}</td>
+            <td>{{ line.Price | number:'1.0-0' }}</td>
+            <td>{{ line.Amount | number:'1.0-0' }}</td>
+          </tr>
+          <tr *ngIf="!printableLines.length">
+            <td colspan="4">No sheets selected.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Payments</h4>
+      <ul class="print-payments">
+        <li *ngFor="let payment of payments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'short' }}</li>
+        <li *ngIf="!payments.length">No payments added.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h4 class="no-print">Recent Bills</h4>
+  <div class="no-print" style="margin-bottom:0.6rem; display:flex; gap:0.5rem; align-items:center;">
+    <label style="font-weight:600;">Filter by Bill ID:</label>
+    <input [(ngModel)]="billIdFilter" (ngModelChange)="onFilterChange()" placeholder="Enter bill id" />
+    <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
+      <button type="button" (click)="prevPage()">Prev</button>
+      <span>Page {{page}} / {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()">Next</button>
+    </div>
+  </div>
+
+  <table class="bill-list no-print">
+    <tr>
+      <th>Action</th>
+      <th>Bill ID</th>
+      <th>Customer</th>
+      <th>Files</th>
+      <th>Total</th>
+      <th>Advance</th>
+    </tr>
+    <tr *ngFor="let bill of pagedBills">
+      <td><a href="#" class="edit-link" (click)="editBill(bill); $event.preventDefault()">Edit</a></td>
+      <td>{{ bill.BillID }}</td>
+      <td>{{ bill.CustomerName }}</td>
+      <td>{{ bill.Files }}</td>
+      <td>{{ bill.Total | number:'1.0-0' }}</td>
+      <td>{{ bill.Advance | number:'1.0-0' }}</td>
+    </tr>
+  </table>
+</div>
