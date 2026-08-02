@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\balav\\Documents\\GitHub\\Employee\\ShivaDigital\\ShivaDigital-API\\ShivaDigital-API.csproj": {}
+    "c:\\Users\\balav\\Documents\\GitHub\\Employee\\ShivaDigital\\ShivaDigital-API\\ShivaDigital-API.csproj": {}
   },
   "projects": {
-    "C:\\Users\\balav\\Documents\\GitHub\\Employee\\ShivaDigital\\ShivaDigital-API\\ShivaDigital-API.csproj": {
+    "c:\\Users\\balav\\Documents\\GitHub\\Employee\\ShivaDigital\\ShivaDigital-API\\ShivaDigital-API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\balav\\Documents\\GitHub\\Employee\\ShivaDigital\\ShivaDigital-API\\ShivaDigital-API.csproj",
+        "projectUniqueName": "c:\\Users\\balav\\Documents\\GitHub\\Employee\\ShivaDigital\\ShivaDigital-API\\ShivaDigital-API.csproj",
         "projectName": "ShivaDigital-API",
-        "projectPath": "C:\\Users\\balav\\Documents\\GitHub\\Employee\\ShivaDigital\\ShivaDigital-API\\ShivaDigital-API.csproj",
+        "projectPath": "c:\\Users\\balav\\Documents\\GitHub\\Employee\\ShivaDigital\\ShivaDigital-API\\ShivaDigital-API.csproj",
         "packagesPath": "C:\\Users\\balav\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\balav\\Documents\\GitHub\\Employee\\ShivaDigital\\ShivaDigital-API\\obj\\",
+        "outputPath": "c:\\Users\\balav\\Documents\\GitHub\\Employee\\ShivaDigital\\ShivaDigital-API\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\balav\\AppData\\Roaming\\NuGet\\NuGet.Config"

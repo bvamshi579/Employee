@@ -64,3 +64,24 @@ app-footer {
   width: 100vw;
   z-index: 10;
 }
+
+@media print {
+  app-header,
+  app-sidenav,
+  app-footer {
+    display: none !important;
+  }
+
+  .main-layout {
+    display: block !important;
+    min-height: auto !important;
+    margin-top: 0 !important;
+  }
+
+  .content-area {
+    padding: 0 !important;
+    background: #ffffff !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+}

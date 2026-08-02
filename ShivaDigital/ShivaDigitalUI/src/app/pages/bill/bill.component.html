@@ -1,5 +1,6 @@
 <div class="bill-page">
-  <div class="card no-print search-card">
+  <div class="card search-card" *ngIf="isSearchOnlyMode">
+    <ng-container *ngIf="!selectedSearchBill">
     <h3>Search Bills by Booking Date</h3>
     <div class="form-grid">
       <div class="form-group">
@@ -19,7 +20,16 @@
     <div *ngIf="searchLoading" class="message">Loading bills...</div>
     <div *ngIf="searchError" class="field-error">{{ searchError }}</div>
 
-    <div class="table-wrap" *ngIf="searchBills.length">
+    <div class="toolbar-row" *ngIf="searchBills.length && !selectedSearchBill">
+      <input type="text" [(ngModel)]="searchGridFilter" (ngModelChange)="onSearchGridFilterChange()" placeholder="Filter by bill id, customer or mobile" />
+      <div class="pager">
+        <button type="button" (click)="prevSearchGridPage()">Prev</button>
+        <span>Page {{ searchGridPage }} / {{ searchGridTotalPages }}</span>
+        <button type="button" (click)="nextSearchGridPage()">Next</button>
+      </div>
+    </div>
+
+    <div class="table-wrap" *ngIf="searchBills.length && !selectedSearchBill">
       <table class="bill-list no-print">
         <thead>
           <tr>
@@ -36,8 +46,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let bill of searchBills">
-            <td><button type="button" class="link-button" (click)="selectPaymentBill(bill)">{{ bill.BillID }}</button></td>
+          <tr *ngFor="let bill of pagedSearchBills">
+            <td><button type="button" class="link-button" (click)="selectSearchBill(bill)">{{ bill.BillID }}</button></td>
             <td>{{ bill.CustomerName }}</td>
             <td>{{ bill.MobileNumber }}</td>
             <td>{{ bill.BillDate | date:'dd/MM/yyyy' }}</td>
@@ -56,17 +66,112 @@
       No bills found for the selected date range.
     </div>
 
-    <div class="payment-box" *ngIf="selectedPaymentBill">
-      <h4>Payments for Bill #{{ selectedPaymentBill.BillID }}</h4>
-      <div class="payment-row">
-        <input type="number" [(ngModel)]="paymentAmountForBill" placeholder="Amount paid" />
-        <button type="button" (click)="addPaymentToSelectedBill()">Add payment</button>
+    <div class="empty-state" *ngIf="!searchLoading && searchBills.length && !filteredSearchBills.length && !selectedSearchBill">
+      No bills match the current filter.
+    </div>
+    </ng-container>
+
+    <div class="payment-box selected-bill-card" *ngIf="selectedSearchBill">
+      <div class="detail-header no-print">
+        <h4>Bill Details & Payments for Bill ID: {{ selectedSearchBill.BillID }}</h4>
+        <div class="detail-actions">
+          <button type="button" class="cancel-button" (click)="printBill()">Print Bill</button>
+          <button type="button" class="cancel-button" (click)="cancelSearchBillSelection()">Cancel</button>
+        </div>
       </div>
-      <div *ngIf="paymentMessage" class="toast success">{{ paymentMessage }}</div>
-      <div *ngIf="paymentError" class="field-error">{{ paymentError }}</div>
+
+      <div class="detail-card no-print">
+        <div class="detail-row full-width"><span class="detail-label">Customer: {{ selectedSearchBill.CustomerName }}</span></div>
+        <div class="detail-row"><span class="detail-label">Mobile</span><span>{{ selectedSearchBill.MobileNumber }}</span></div>
+        <div class="detail-row"><span class="detail-label">Bill Date</span><span>{{ selectedSearchBill.BillDate | date:'dd/MM/yyyy' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Total</span><span>{{ selectedSearchBill.Total | number:'1.0-0' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Discount</span><span>{{ selectedSearchBill.Discount | number:'1.0-0' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Payable</span><span>{{ getPayable(selectedSearchBill) | number:'1.0-0' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Total Paid</span><span>{{ getTotalPaid(selectedSearchBill) | number:'1.0-0' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Balance Due</span><span>{{ getBalanceDue(selectedSearchBill) | number:'1.0-0' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Advance</span><span>{{ selectedSearchBill.Advance | number:'1.0-0' }}</span></div>
+      </div>
+
+      <div class="payment-section no-print">
+        <div class="payment-row compact-row">
+          <input type="number" [(ngModel)]="paymentAmountForBill" placeholder="Amount paid" />
+          <button type="button" (click)="addPaymentToSelectedBill()">Add payment</button>
+        </div>
+        <div *ngIf="paymentMessage" class="toast success">{{ paymentMessage }}</div>
+        <div *ngIf="paymentError" class="field-error">{{ paymentError }}</div>
+
+        <div class="payment-history">
+          <h5>Previous Payments</h5>
+          <div *ngIf="selectedSearchBill.AdvancePayments?.length; else noPayments" class="payment-table">
+            <div class="payment-table-row payment-table-head">
+              <span>Amount</span>
+              <span>Date</span>
+            </div>
+            <div class="payment-table-row" *ngFor="let payment of selectedSearchBill.AdvancePayments">
+              <span>{{ payment.AmountPaid | number:'1.0-0' }}</span>
+              <span>{{ payment.PaymentDate | date:'dd/MM/yyyy hh:mm a' }}</span>
+            </div>
+          </div>
+          <ng-template #noPayments>
+            <div class="empty-state">No previous payments recorded for this bill.</div>
+          </ng-template>
+        </div>
+      </div>
+
     </div>
   </div>
 
+  <div class="printable-bill" *ngIf="isSearchOnlyMode && selectedSearchBill">
+    <div class="printable-bill-inner">
+      <h3>Bill Preview</h3>
+      <div class="print-meta-grid">
+        <div><strong>Bill ID:</strong> {{ printableBillId }}</div>
+        <div><strong>Customer:</strong> {{ printableCustomerName }}</div>
+        <div><strong>Files:</strong> {{ printableFiles }}</div>
+        <div><strong>File Size:</strong> {{ printableFileSize || '—' }}</div>
+        <div><strong>Booking Time:</strong> {{ printableBooking ? (printableBooking | date:'dd/MM/yyyy hh:mm a') : '—' }}</div>
+        <div><strong>Delivery Time:</strong> {{ printableDelivery ? (printableDelivery | date:'dd/MM/yyyy hh:mm a') : '—' }}</div>
+        <div><strong>Total:</strong> {{ printableTotal | number:'1.0-0' }}</div>
+        <div><strong>Discount:</strong> {{ printableDiscount | number:'1.0-0' }}</div>
+        <div><strong>Total Payable:</strong> {{ printablePayable | number:'1.0-0' }}</div>
+        <div><strong>Total Paid:</strong> {{ printableBalancePaid | number:'1.0-0' }}</div>
+        <div><strong>Balance Due:</strong> {{ printableDue | number:'1.0-0' }}</div>
+        <div><strong>Advance:</strong> {{ printableAdvance | number:'1.0-0' }}</div>
+        <div><strong>Mobile:</strong> {{ printableMobileNumber }}</div>
+      </div>
+
+      <h4>Sheets</h4>
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th>Sheet</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let line of printableLines">
+            <td>{{ line.SheetName }}</td>
+            <td>{{ line.Quantity }}</td>
+            <td>{{ line.Price | number:'1.0-0' }}</td>
+            <td>{{ line.Amount | number:'1.0-0' }}</td>
+          </tr>
+          <tr *ngIf="!printableLines.length">
+            <td colspan="4">No sheets selected.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Payments</h4>
+      <ul class="print-payments">
+        <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'short' }}</li>
+        <li *ngIf="!printablePayments.length">No payments recorded.</li>
+      </ul>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!isSearchOnlyMode">
   <h3>Create Bill</h3>
 
   <div class="card no-print">
@@ -169,18 +274,19 @@
     <div class="printable-bill-inner">
       <h3>Bill Preview</h3>
       <div class="print-meta-grid">
-        <div><strong>Bill ID:</strong> {{ currentBillId !== null ? currentBillId : 'New' }}</div>
-        <div><strong>Customer:</strong> {{ selectedCustomerName || 'Not selected' }}</div>
-        <div><strong>Files:</strong> {{ files || '—' }}</div>
+        <div><strong>Bill ID:</strong> {{ printableBillId }}</div>
+        <div><strong>Customer:</strong> {{ printableCustomerName }}</div>
+        <div><strong>Files:</strong> {{ printableFiles }}</div>
         <div><strong>File Size:</strong> {{ printableFileSize || '—' }}</div>
         <div><strong>Booking Time:</strong> {{ printableBooking ? (printableBooking | date:'dd/MM/yyyy hh:mm a') : '—' }}</div>
         <div><strong>Delivery Time:</strong> {{ printableDelivery ? (printableDelivery | date:'dd/MM/yyyy hh:mm a') : '—' }}</div>
-        <div><strong>Total:</strong> {{ total | number:'1.0-0' }}</div>
-        <div><strong>Discount:</strong> {{ discount | number:'1.0-0' }}</div>
-        <div><strong>Total Payable:</strong> {{ payable | number:'1.0-0' }}</div>
-        <div><strong>Total Paid:</strong> {{ balancePaid | number:'1.0-0' }}</div>
-        <div><strong>Balance Due:</strong> {{ due | number:'1.0-0' }}</div>
-        <div><strong>Advance:</strong> {{ advance | number:'1.0-0' }}</div>
+        <div><strong>Total:</strong> {{ printableTotal | number:'1.0-0' }}</div>
+        <div><strong>Discount:</strong> {{ printableDiscount | number:'1.0-0' }}</div>
+        <div><strong>Total Payable:</strong> {{ printablePayable | number:'1.0-0' }}</div>
+        <div><strong>Total Paid:</strong> {{ printableBalancePaid | number:'1.0-0' }}</div>
+        <div><strong>Balance Due:</strong> {{ printableDue | number:'1.0-0' }}</div>
+        <div><strong>Advance:</strong> {{ printableAdvance | number:'1.0-0' }}</div>
+        <div><strong>Mobile:</strong> {{ printableMobileNumber }}</div>
       </div>
 
       <h4>Sheets</h4>
@@ -208,8 +314,8 @@
 
       <h4>Payments</h4>
       <ul class="print-payments">
-        <li *ngFor="let payment of payments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'short' }}</li>
-        <li *ngIf="!payments.length">No payments added.</li>
+        <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'short' }}</li>
+        <li *ngIf="!printablePayments.length">No payments recorded.</li>
       </ul>
     </div>
   </div>
@@ -243,4 +349,5 @@
       <td>{{ bill.Advance | number:'1.0-0' }}</td>
     </tr>
   </table>
+  </ng-container>
 </div>

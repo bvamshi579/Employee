@@ -47,7 +47,8 @@ export const NAV_LINKS: NavLink[] = [
       { label: 'Overview', route: '/dashboard/overview', icon: 'bar_chart' },
       { label: 'Reports', route: '/dashboard/reports', icon: 'insert_chart' },
       { label: 'Customer', route: '/customer', icon: 'person' },
-      { label: 'Bill', route: '/bill', icon: 'receipt' }
+      { label: 'Bill', route: '/bill', icon: 'receipt' },
+      { label: 'Bill Search', route: '/bill-search', icon: 'search' }
     ]
   },
   {

@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Customer, CustomerService } from '../../services/customer.service';
 import { Bill, BillLine, BillPayment, BillService, SheetOption, FileSizeOption } from '../../services/bill.service';
 
@@ -13,6 +14,7 @@ import { Bill, BillLine, BillPayment, BillService, SheetOption, FileSizeOption }
 })
 export class BillComponent implements OnInit {
   isEditMode = false;
+  isSearchOnlyMode = false;
   currentBillId: number | null = null;
   customers: Customer[] = [];
   bills: Bill[] = [];
@@ -22,6 +24,10 @@ export class BillComponent implements OnInit {
   searchLoading = false;
   searchError = '';
   selectedPaymentBill: Bill | null = null;
+  selectedSearchBill: Bill | null = null;
+  searchGridFilter = '';
+  searchGridPage = 1;
+  searchGridPageSize = 10;
   paymentAmountForBill = 0;
   paymentMessage = '';
   paymentError = '';
@@ -33,6 +39,7 @@ export class BillComponent implements OnInit {
   fileSizes: FileSizeOption[] = [];
   selectedCustomerId: number | null = null;
   selectedCustomerName = '';
+  selectedCustomerMobile = '';
   customerSearch = '';
   filteredCustomers: Customer[] = [];
   files = '';
@@ -65,16 +72,22 @@ export class BillComponent implements OnInit {
   constructor(
     private customerService: CustomerService,
     private billService: BillService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
+    this.isSearchOnlyMode = this.route.snapshot.data['mode'] === 'search';
     this.loadCustomers();
     this.loadSheets();
     this.loadFileSizes();
     this.resetLines();
-    this.setDefaultSearchDateRange();
-    this.loadSearchBills();
+
+    if (this.isSearchOnlyMode) {
+      this.setDefaultSearchDateRange();
+      this.loadSearchBills();
+    }
+
     // default booking time to now for new bills
     this.bookingTime = this.formatDateForInput(new Date().toISOString());
   }
@@ -118,10 +131,14 @@ export class BillComponent implements OnInit {
     this.searchError = '';
     this.paymentMessage = '';
     this.paymentError = '';
+    this.selectedSearchBill = null;
+    this.selectedPaymentBill = null;
 
     this.billService.searchBills(this.searchFromDate, this.searchToDate).subscribe({
       next: (data) => {
         this.searchBills = data || [];
+        this.searchGridPage = 1;
+        this.searchGridFilter = '';
         this.searchLoading = false;
       },
       error: () => {
@@ -129,6 +146,41 @@ export class BillComponent implements OnInit {
         this.searchError = 'Unable to load bills for the selected date range.';
       }
     });
+  }
+
+  selectSearchBill(bill: Bill) {
+    this.selectedSearchBill = null;
+    this.selectedPaymentBill = null;
+    this.paymentAmountForBill = 0;
+    this.paymentError = '';
+    this.paymentMessage = '';
+
+    if (!bill.BillID) {
+      return;
+    }
+
+    this.searchLoading = true;
+    this.billService.getBill(bill.BillID).subscribe({
+      next: (detail) => {
+        this.selectedSearchBill = detail;
+        this.selectedPaymentBill = detail;
+        this.searchLoading = false;
+      },
+      error: () => {
+        this.selectedSearchBill = bill;
+        this.selectedPaymentBill = bill;
+        this.paymentError = 'Unable to load bill details.';
+        this.searchLoading = false;
+      }
+    });
+  }
+
+  cancelSearchBillSelection() {
+    this.selectedSearchBill = null;
+    this.selectedPaymentBill = null;
+    this.paymentAmountForBill = 0;
+    this.paymentError = '';
+    this.paymentMessage = '';
   }
 
   selectPaymentBill(bill: Bill) {
@@ -150,10 +202,30 @@ export class BillComponent implements OnInit {
     }
 
     this.billService.addPayment(this.selectedPaymentBill.BillID, this.paymentAmountForBill).subscribe({
-      next: () => {
+      next: (updatedBill) => {
         this.paymentAmountForBill = 0;
         this.paymentMessage = 'Payment added successfully.';
-        this.loadSearchBills();
+
+        if (this.selectedSearchBill?.BillID === updatedBill.BillID) {
+          const currentSelectedBill = this.selectedSearchBill;
+          if (currentSelectedBill) {
+            this.selectedSearchBill = {
+              ...currentSelectedBill,
+              ...updatedBill,
+              AdvancePayments: updatedBill.AdvancePayments || currentSelectedBill.AdvancePayments || []
+            };
+            this.selectedPaymentBill = this.selectedSearchBill;
+          }
+        }
+
+        this.searchBills = this.searchBills.map((bill) => {
+          if (bill.BillID !== updatedBill.BillID) return bill;
+          return {
+            ...bill,
+            ...updatedBill,
+            AdvancePayments: updatedBill.AdvancePayments || bill.AdvancePayments || []
+          };
+        });
       },
       error: () => {
         this.paymentError = 'Unable to add the payment.';
@@ -208,6 +280,7 @@ export class BillComponent implements OnInit {
   selectCustomer(customer: Customer) {
     this.selectedCustomerId = customer.CustomerID ?? null;
     this.selectedCustomerName = customer.CustomerName || '';
+    this.selectedCustomerMobile = customer.MobileNumber || '';
     this.customerSearch = `${customer.CustomerName} (${customer.MobileNumber})`;
     this.filteredCustomers = [];
     this.loadCustomerBills();
@@ -244,9 +317,32 @@ export class BillComponent implements OnInit {
     return this.bills.filter((b) => (b.BillID ? String(b.BillID).includes(idTerm) : false));
   }
 
+  get filteredSearchBills(): Bill[] {
+    const filterTerm = (this.searchGridFilter || '').toString().trim().toLowerCase();
+    if (!filterTerm) return this.searchBills;
+
+    return this.searchBills.filter((bill) => {
+      const haystack = [
+        bill.BillID?.toString() || '',
+        bill.CustomerName || '',
+        bill.MobileNumber || ''
+      ].join(' ').toLowerCase();
+      return haystack.includes(filterTerm);
+    });
+  }
+
   get pagedBills(): Bill[] {
     const start = (this.page - 1) * this.pageSize;
     return this.filteredBills.slice(start, start + this.pageSize);
+  }
+
+  get pagedSearchBills(): Bill[] {
+    const start = (this.searchGridPage - 1) * this.searchGridPageSize;
+    return this.filteredSearchBills.slice(start, start + this.searchGridPageSize);
+  }
+
+  get searchGridTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredSearchBills.length / this.searchGridPageSize));
   }
 
   get totalPages(): number {
@@ -257,12 +353,24 @@ export class BillComponent implements OnInit {
     this.page = 1;
   }
 
+  onSearchGridFilterChange() {
+    this.searchGridPage = 1;
+  }
+
   prevPage() {
     if (this.page > 1) this.page--;
   }
 
   nextPage() {
     if (this.page < this.totalPages) this.page++;
+  }
+
+  prevSearchGridPage() {
+    if (this.searchGridPage > 1) this.searchGridPage--;
+  }
+
+  nextSearchGridPage() {
+    if (this.searchGridPage < this.searchGridTotalPages) this.searchGridPage++;
   }
 
   resetLines() {
@@ -312,11 +420,65 @@ export class BillComponent implements OnInit {
     this.due = Math.max(0, this.payable - (this.balancePaid || 0));
   }
 
+  get printableBillId(): string {
+    return this.selectedSearchBill?.BillID != null ? String(this.selectedSearchBill.BillID) : (this.currentBillId !== null ? String(this.currentBillId) : 'New');
+  }
+
+  get printableCustomerName(): string {
+    return this.selectedSearchBill?.CustomerName || this.selectedCustomerName || 'Not selected';
+  }
+
+  get printableFiles(): string {
+    return this.selectedSearchBill?.Files || this.files || '—';
+  }
+
+  get printableTotal(): number {
+    return this.selectedSearchBill?.Total ?? this.total;
+  }
+
+  get printableDiscount(): number {
+    return this.selectedSearchBill?.Discount ?? this.discount;
+  }
+
+  get printablePayable(): number {
+    return this.selectedSearchBill ? this.getPayable(this.selectedSearchBill) : this.payable;
+  }
+
+  get printableBalancePaid(): number {
+    return this.selectedSearchBill ? this.getTotalPaid(this.selectedSearchBill) : this.balancePaid;
+  }
+
+  get printableDue(): number {
+    return this.selectedSearchBill ? this.getBalanceDue(this.selectedSearchBill) : this.due;
+  }
+
+  get printableAdvance(): number {
+    return this.selectedSearchBill?.Advance ?? this.advance;
+  }
+
+  get printableMobileNumber(): string {
+    return this.selectedSearchBill?.MobileNumber || this.selectedCustomerMobile || '—';
+  }
+
   get printableLines(): BillLine[] {
+    if (this.selectedSearchBill?.Lines?.length) {
+      return (this.selectedSearchBill.Lines || []).map((line) => ({
+        ...line,
+        Quantity: Number(line.Quantity ?? 0),
+        Amount: Number(line.Amount ?? 0)
+      }) as BillLine);
+    }
+
     return this.lines.filter((line) => (line.Quantity ?? 0) > 0);
   }
 
   get printableFileSize(): string | null {
+    if (this.selectedSearchBill?.FileSize != null) {
+      const id = this.selectedSearchBill.FileSize;
+      const found = this.fileSizes.find((f) => f.ID === id);
+      return found ? found.FileSize ?? String(id) : String(id);
+    }
+
     if (!this.fileSize && this.fileSize !== 0) return null;
     const id = typeof this.fileSize === 'number' ? this.fileSize : Number(this.fileSize);
     const found = this.fileSizes.find((f) => f.ID === id);
@@ -324,15 +486,21 @@ export class BillComponent implements OnInit {
   }
 
   get printableBooking(): Date | null {
-    if (!this.bookingTime) return null;
-    const d = new Date(this.bookingTime);
+    const bookingValue = this.selectedSearchBill?.BookingTime || this.bookingTime;
+    if (!bookingValue) return null;
+    const d = new Date(bookingValue);
     return isNaN(d.getTime()) ? null : d;
   }
 
   get printableDelivery(): Date | null {
-    if (!this.deliveryTime) return null;
-    const d = new Date(this.deliveryTime);
+    const deliveryValue = this.selectedSearchBill?.DeliveryTime || this.deliveryTime;
+    if (!deliveryValue) return null;
+    const d = new Date(deliveryValue);
     return isNaN(d.getTime()) ? null : d;
+  }
+
+  get printablePayments(): BillPayment[] {
+    return this.selectedSearchBill?.AdvancePayments?.length ? this.selectedSearchBill.AdvancePayments || [] : this.payments;
   }
 
   printBill() {
@@ -471,6 +639,7 @@ export class BillComponent implements OnInit {
     this.currentBillId = bill.BillID ?? null;
     this.selectedCustomerId = bill.CustomerID ?? null;
     this.selectedCustomerName = bill.CustomerName || '';
+    this.selectedCustomerMobile = bill.MobileNumber || '';
     this.customerSearch = this.selectedCustomerName;
     this.files = bill.Files || '';
     // ensure fileSizes are loaded and then set the selected value so the <select> binds correctly

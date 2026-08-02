@@ -10,6 +10,7 @@ export const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
   { path: 'customer', component: CustomerComponent, canActivate: [AuthGuard] },
   { path: 'bill', component: BillComponent, canActivate: [AuthGuard] },
+  { path: 'bill-search', component: BillComponent, data: { mode: 'search' }, canActivate: [AuthGuard] },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: 'login' }
 ];
