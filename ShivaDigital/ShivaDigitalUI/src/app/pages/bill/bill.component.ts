@@ -37,11 +37,13 @@ export class BillComponent implements OnInit {
   billIdFilter = '';
   page = 1;
   pageSize = 10;
+  showDueOnly = false;
   sheetOptions: SheetOption[] = [];
   fileSizes: FileSizeOption[] = [];
   selectedCustomerId: number | null = null;
   selectedCustomerName = '';
   selectedCustomerMobile = '';
+  pendingCustomerId: number | undefined;
   customerSearch = '';
   filteredCustomers: Customer[] = [];
   files = '';
@@ -83,6 +85,24 @@ export class BillComponent implements OnInit {
     const routeMode = this.route.snapshot.data['mode'];
     this.searchMode = routeMode === 'payment-search' ? 'payment-search' : 'search';
     this.isSearchOnlyMode = routeMode === 'search' || routeMode === 'payment-search';
+    // watch for query params so other pages (customer list modal) can open a bill directly
+    this.route.queryParams.subscribe((qp) => {
+      const bid = qp['billId'] ? Number(qp['billId']) : undefined;
+      const cid = qp['customerId'] ? Number(qp['customerId']) : undefined;
+      if (typeof bid === 'number' && !isNaN(bid)) {
+        this.billService.getBill(bid).subscribe({
+          next: (b) => this.openBillForEdit(b),
+          error: () => {
+            // ignore — allow user to continue
+          }
+        });
+      }
+      if (typeof cid === 'number' && !isNaN(cid)) {
+        // store pending selection until customers are loaded
+        this.pendingCustomerId = cid;
+      }
+    });
+
     this.loadCustomers();
     this.loadSheets();
     this.loadFileSizes();
@@ -119,6 +139,12 @@ export class BillComponent implements OnInit {
       next: (data) => {
         this.customers = data;
         this.filteredCustomers = data;
+        // if a customer was requested via query params, select them
+        if (this.pendingCustomerId) {
+          const found = this.customers.find((c) => c.CustomerID === this.pendingCustomerId);
+          if (found) this.selectCustomer(found);
+          this.pendingCustomerId = undefined;
+        }
       },
       error: () => this.message = 'Unable to load customers.'
     });
@@ -325,12 +351,22 @@ export class BillComponent implements OnInit {
 
   get filteredBills(): Bill[] {
     const idTerm = (this.billIdFilter || '').toString().trim();
-    if (!idTerm) return this.bills;
-    const num = Number(idTerm);
-    if (!isNaN(num) && idTerm !== '') {
-      return this.bills.filter((b) => b.BillID === num || String(b.BillID)?.includes(idTerm));
+    let base = this.bills;
+
+    if (idTerm) {
+      const num = Number(idTerm);
+      if (!isNaN(num) && idTerm !== '') {
+        base = base.filter((b) => b.BillID === num || String(b.BillID)?.includes(idTerm));
+      } else {
+        base = base.filter((b) => (b.BillID ? String(b.BillID).includes(idTerm) : false));
+      }
     }
-    return this.bills.filter((b) => (b.BillID ? String(b.BillID).includes(idTerm) : false));
+
+    if (this.showDueOnly) {
+      return base.filter((b) => this.getBalanceDue(b) > 0);
+    }
+
+    return base;
   }
 
   get filteredSearchBills(): Bill[] {

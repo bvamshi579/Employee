@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_BASE } from '../app.tokens';
 
 export interface Customer {
   CustomerID?: number;
@@ -13,9 +14,11 @@ export interface Customer {
 
 @Injectable({ providedIn: 'root' })
 export class CustomerService {
-  private apiUrl = 'http://localhost:3600/customers';
+  private apiUrl = '';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, @Inject(API_BASE) private apiBase: string) {
+    this.apiUrl = `${this.apiBase || ''}/customers`;
+  }
 
   getCustomers(): Observable<Customer[]> {
     return this.http.get<Customer[]>(this.apiUrl);

@@ -149,3 +149,56 @@
   }
 }
 
+/* modal styles for recent bills */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 20, 40, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+.modal-content {
+  background: #ffffff;
+  width: min(920px, 96%);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 14px 40px rgba(20,40,80,0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.modal-actions button {
+  margin-left: 0.5rem;
+  padding: 0.4rem 0.7rem;
+}
+
+.recent-bills-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.recent-bills-table th, .recent-bills-table td {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.link-button {
+  background: none;
+  color: #1976d2;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.link-button:hover { text-decoration: underline; }
+

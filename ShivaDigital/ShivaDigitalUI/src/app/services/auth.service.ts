@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { API_BASE } from '../app.tokens';
 
 interface AuthResult {
   isValid: boolean;
@@ -16,9 +17,11 @@ interface AuthResult {
 })
 export class AuthService {
   private isLoggedIn = false;
-  private apiUrl = 'http://localhost:3600/auth/login';
+  private apiUrl = '';
 
-  constructor(private router: Router, private http: HttpClient) { }
+  constructor(private router: Router, private http: HttpClient, @Inject(API_BASE) private apiBase: string) {
+    this.apiUrl = `${this.apiBase || ''}/auth/login`;
+  }
 
   login(username: string, password: string): Observable<boolean> {
     return this.http.post<AuthResult>(this.apiUrl, { userName: username, password }).pipe(

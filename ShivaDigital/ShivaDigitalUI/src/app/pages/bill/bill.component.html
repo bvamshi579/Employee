@@ -350,6 +350,7 @@
         <span>🔎</span>
         <input [(ngModel)]="billIdFilter" (ngModelChange)="onFilterChange()" placeholder="Filter by bill id" />
       </div>
+      <label class="due-toggle"><input type="checkbox" [(ngModel)]="showDueOnly" (change)="onFilterChange()" /> Due only</label>
       <div class="summary">{{ filteredBills.length }} bill(s)</div>
       <button type="button" class="export-btn" (click)="exportRecentBills()">Export to Excel</button>
     </div>

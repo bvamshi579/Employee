@@ -31,7 +31,7 @@
           <button type="button" class="edit-btn" (click)="onEdit(c)">Edit</button>
           <!-- <button type="button" class="delete-btn" (click)="onDelete(c.CustomerID)">Delete</button> -->
         </td>
-        <td>{{ c.CustomerName }}</td>
+        <td><button type="button" class="link-button" (click)="openRecentBills(c)">{{ c.CustomerName }}</button></td>
         <td>{{ c.MobileNumber }}</td>
         <td>{{ c.Address }}</td>
         <td>{{ c.PanNumber }}</td>
@@ -42,6 +42,59 @@
       </tr>
     </tbody>
   </table>
+
+  <!-- Recent bills modal -->
+  <div class="modal-overlay" *ngIf="showRecentModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>Recent Bills for {{ recentModalCustomerName }}</h4>
+        <div class="modal-actions">
+          <label style="margin-right:0.6rem"><input type="checkbox" [(ngModel)]="recentModalShowDueOnly" (ngModelChange)="recentModalPage = 1" /> Due only</label>
+          <button type="button" (click)="exportRecentModalBills()">Export</button>
+          <button type="button" (click)="closeRecentModal()">Close</button>
+        </div>
+      </div>
+
+      <div *ngIf="recentModalLoading" class="message">Loading...</div>
+
+      <div class="pagination" *ngIf="recentBills.length > recentModalPageSize">
+        <button type="button" (click)="recentModalPrev()" [disabled]="recentModalPage === 1">Prev</button>
+        <span>Page {{ recentModalPage }} of {{ recentModalTotalPages }}</span>
+        <button type="button" (click)="recentModalNext()" [disabled]="recentModalPage === recentModalTotalPages">Next</button>
+      </div>
+
+      <table *ngIf="!recentModalLoading && recentBills.length" class="recent-bills-table">
+        <thead>
+          <tr>
+            <th>Bill ID</th>
+            <th>Bill Date</th>
+            <th class="align-right">Total</th>
+            <th class="align-right">Discount</th>
+            <th class="align-right">Payable</th>
+            <th class="align-right">Total Paid</th>
+            <th class="align-right">Balance Due</th>
+            <th class="align-right">Advance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of recentModalPagedBills">
+            <td>{{ b.BillID }}</td>
+            <td>{{ b.BillDate | date:'dd/MM/yyyy' }}</td>
+            <td class="align-right">{{ b.Total | number:'1.0-0' }}</td>
+            <td class="align-right">{{ b.Discount | number:'1.0-0' }}</td>
+            <td class="align-right">{{ getPayable(b) | number:'1.0-0' }}</td>
+            <td class="align-right">{{ getTotalPaid(b) | number:'1.0-0' }}</td>
+            <td class="align-right">{{ getBalanceDue(b) | number:'1.0-0' }}</td>
+            <td class="align-right">{{ b.Advance | number:'1.0-0' }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+    
+
+      <div *ngIf="!recentModalLoading && !recentBills.length" class="empty-state">No recent bills found for this customer.</div>
+    </div>
+  </div>
 
   <div *ngIf="loading">Loading...</div>
   <div *ngIf="error" class="error">{{ error }}</div>

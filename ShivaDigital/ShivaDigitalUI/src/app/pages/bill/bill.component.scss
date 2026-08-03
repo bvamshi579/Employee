@@ -1,28 +1,12 @@
-.bill-page {
-  max-width: 1100px;
-  margin: 0.8rem auto; /* reduced top/bottom space */
-  padding: 0.6rem; /* tighter page padding */
-}
+.bill-page{max-width:1100px;margin:0.8rem auto;padding:0.6rem}
 
-.card {
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  border-radius: 12px;
-  padding: 0.9rem; /* reduced padding to tighten content */
-  box-shadow: 0 8px 20px rgba(25, 118, 210, 0.10);
-}
+.card{background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);border-radius:12px;padding:0.9rem;box-shadow:0 8px 20px rgba(25,118,210,0.10)}
 
 .search-card {
   margin-bottom: 1.25rem;
 }
 
-.header-card {
-  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
-  color: #fff;
-  border-radius: 12px;
-  padding: 0.7rem 0.9rem;
-  margin-bottom: 0.6rem; /* reduced gap under header */
-  box-shadow: 0 6px 16px rgba(25, 118, 210, 0.14);
-}
+.header-card{background:linear-gradient(90deg,#1976d2 0%,#42a5f5 100%);color:#fff;border-radius:12px;padding:0.7rem 0.9rem;margin-bottom:0.6rem;box-shadow:0 6px 16px rgba(25,118,210,0.14)}
 
 .header-card.active {
   background: linear-gradient(90deg, #0d47a1 0%, #1976d2 100%);
@@ -46,11 +30,7 @@
   opacity: 0.95;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem; /* reduced spacing between fields */
-}
+.form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0.6rem}
 
 @media (max-width: 900px) {
   .form-grid {
@@ -144,7 +124,6 @@ input:focus, select:focus {
   font-size: 0.95rem;
 }
 
-/* Reuse customer-like search-box styles */
 .search-box {
   display: flex;
   align-items: center;
@@ -184,11 +163,20 @@ input:focus, select:focus {
   filter: brightness(0.96);
 }
 
-.export-btn {
-  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%) !important;
-  color: #fff !important;
-  border: none !important;
+.due-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0f3b66;
+  font-weight: 600;
 }
+
+.due-toggle input {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* export button styling defined below */
 
 .pager {
   display: flex;
@@ -227,40 +215,27 @@ input:focus, select:focus {
 
 .sheet-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.9rem;
   margin-top: 0.8rem;
   max-height: 380px;
   overflow-y: auto;
-  padding-right: 0.5rem; /* room for scrollbar */
 }
 
 .sheet-card {
   border: 1px solid #dbe7f8;
   border-radius: 14px;
   padding: 0.9rem;
-  background: #ffffff;
-  box-shadow: 0 6px 16px rgba(15, 59, 102, 0.06);
-}
-
-.sheet-name {
-  font-weight: 700;
-  color: #0f3b66;
-  margin-bottom: 0.55rem;
-}
-
-.sheet-card label {
-  font-size: 0.85rem;
-}
-
-.sheet-amount {
-  margin-top: 0.6rem;
+  background: #fff;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  color: #1976d2;
-  font-weight: 600;
+  min-height: 110px;
 }
+
+.sheet-name { font-weight: 700; color: #0f3b66; margin-bottom: 0.55rem }
+.sheet-card label { font-size: 0.85rem }
+.sheet-amount { margin-top: 0.6rem; display: flex; justify-content: space-between; align-items: center; color: #1976d2; font-weight: 600 }
 
 .bill-list-panel {
   margin-top: 1.25rem;
@@ -413,30 +388,9 @@ input:focus, select:focus {
   cursor: not-allowed;
 }
 
-.totals, .payment-box {
-  margin-top: 1rem;
-  background: #f8fbff;
-  border: 1px solid #e7eef8;
-  border-radius: 12px;
-  padding: 0.8rem;
-}
-
-.totals {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.totals > div {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 0.85rem;
-  background: #ffffff;
-  border-radius: 10px;
-  border: 1px solid #e4ecf6;
-}
+.totals,.payment-box{margin-top:1rem;background:#f8fbff;border:1px solid #e7eef8;border-radius:12px;padding:0.8rem}
+.totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0.75rem;align-items:center}
+.totals>div{display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0.85rem;background:#fff;border-radius:10px;border:1px solid #e4ecf6}
 
 @media (max-width: 900px) {
   .totals {
@@ -450,16 +404,8 @@ input:focus, select:focus {
   }
 }
 
-.payment-row {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.payment-row.compact-row {
-  margin-top: 0;
-  margin-bottom: 0.75rem;
-}
+.payment-row{display:flex;gap:0.5rem;margin-top:0.5rem}
+.payment-row.compact-row{margin-top:0;margin-bottom:0.75rem}
 
 .selected-bill-card {
   margin-top: 0.9rem;
@@ -503,32 +449,7 @@ input:focus, select:focus {
   margin-top: 0.75rem;
 }
 
-.payment-table {
-  width: fit-content;
-  max-width: 100%;
-  border: 1px solid #e7eef8;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #f7fbff;
-}
-
-.payment-table-row {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: 0.75rem;
-  padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid #e7eef8;
-}
-
-.payment-table-row:last-child {
-  border-bottom: none;
-}
-
-.payment-table-head {
-  font-weight: 700;
-  color: #0f3b66;
-  background: #edf5ff;
-}
+.payment-table{border:1px solid #e7eef8;border-radius:8px;background:#f7fbff}
 
 .detail-header {
   display: flex;
@@ -572,24 +493,8 @@ input:focus, select:focus {
   cursor: pointer;
 }
 
-.edit-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
-  color: #fff;
-  border-radius: 8px;
-  padding: 0.35rem 0.8rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: transform 0.2s ease, filter 0.2s ease;
-}
-
-.edit-link:hover {
-  transform: translateY(-1px);
-  filter: brightness(0.96);
-}
+.edit-link{background:linear-gradient(90deg,#1976d2 0%,#42a5f5 100%);color:#fff;border-radius:8px;padding:0.35rem 0.8rem;font-weight:600;text-decoration:none}
+.edit-link:hover{opacity:0.95}
 
 .toast {
   margin-top: 0.9rem;
@@ -624,47 +529,9 @@ input:focus, select:focus {
   margin-top: 0.35rem;
 }
 
-.printable-bill {
-  display: none;
-  margin-top: 1.25rem;
-}
+.printable-bill{display:none;margin-top:1rem}.printable-bill-inner{border:1px solid #dbe7f8;border-radius:12px;padding:0.8rem;background:#fff}
 
-.printable-bill-inner {
-  border: 1px solid #dbe7f8;
-  border-radius: 14px;
-  padding: 1rem;
-  background: #ffffff;
-}
-
-.print-meta-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem;
-  margin-bottom: 1rem;
-}
-
-.print-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
-}
-
-.print-table th,
-.print-table td {
-  border: 1px solid #dbe7f8;
-  padding: 0.6rem;
-  text-align: left;
-}
-
-.print-payments {
-  padding-left: 1.1rem;
-}
-
-@media (max-width: 1200px) {
-  .sheet-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
+@media (max-width:1200px){.sheet-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 @media (max-width: 900px) {
   .sheet-grid {
@@ -698,8 +565,31 @@ input:focus, select:focus {
   }
 
   .print-meta-grid {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+    align-items: start;
   }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.6rem;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #e7eef8;
+    padding: 0.5rem 0.6rem;
+    text-align: left;
+  }
+
+  .print-table th { background: #f2f7ff; color: #0f3b66; font-weight: 700 }
+
+  .print-payments { list-style: none; padding-left: 0; margin-top: 0.4rem }
+
+  .print-payments li { padding: 0.25rem 0 }
 }
 
 @media print {
@@ -718,5 +608,88 @@ input:focus, select:focus {
   .printable-bill-inner {
     box-shadow: none;
     border: 1px solid #cfd8e3;
+    margin: 0;
+    padding: 0.6rem;
+    width: 100%;
+    page-break-inside: avoid;
   }
+
+  /* Force two-column layout for printable meta/details to match previous rows */
+
+    /* Use collapsed borders for print tables so outer border and cell borders show as single lines */
+    .print-table {
+      border-collapse: collapse !important;
+      border-spacing: 0 !important;
+      border: 1px solid #dbe7f8 !important;
+      width: 100%;
+    }
+
+    .print-table th,
+    .print-table td {
+      border: 1px solid #dbe7f8 !important;
+      padding: 8px 10px !important;
+      background: transparent !important;
+    }
+  .print-meta-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.6rem !important;
+    align-items: start !important;
+  }
+
+  /* Ensure detail-card uses two columns when printing */
+  .printable-bill-inner .detail-card {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Avoid splitting table rows and important blocks across pages */
+  .print-table, .print-table tbody, .print-table tr, .printable-bill-inner { page-break-inside: avoid; }
+
+  .sheet-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .sheet-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  h3, h4 { margin: 0 0 0.35rem }
+
+  .print-table th, .print-table td { font-size: 12px }
+
+  /* Center printable card and approximate original sizing */
+  .printable-bill-inner {
+    max-width: 760px;
+    margin: 12px auto;
+    padding: 18px;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .print-meta-grid > div {
+    /* keep label and value on same line */
+    display: block;
+    line-height: 1.35;
+  }
+
+  .print-meta-grid > div strong {
+    display: inline-block;
+    width: 110px;
+    font-weight: 700;
+    color: #0f3b66;
+  }
+
+  .print-table th, .print-table td {
+    border: 1px solid #dbe7f8;
+    padding: 10px 12px;
+  }
+
+  .print-table thead th { background: transparent; color: #0b3a66 }
+
+  .print-payments { margin-top: 12px }
 }

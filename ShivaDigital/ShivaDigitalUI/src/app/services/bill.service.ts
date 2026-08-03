@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_BASE } from '../app.tokens';
 
 export interface BillLine {
   SheetTypeID?: number;
@@ -53,9 +54,11 @@ export interface FileSizeOption {
 
 @Injectable({ providedIn: 'root' })
 export class BillService {
-  private apiUrl = 'http://localhost:3600/bills';
+  private apiUrl = '';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, @Inject(API_BASE) private apiBase: string) {
+    this.apiUrl = `${this.apiBase || ''}/bills`;
+  }
 
   getBills(): Observable<Bill[]> {
     return this.http.get<Bill[]>(this.apiUrl);
