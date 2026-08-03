@@ -94,6 +94,51 @@ public class BillRepository
         return result;
     }
 
+    public async Task<List<Bill>> SearchByPaymentDateAsync(DateTime? fromDate, DateTime? toDate)
+    {
+        var result = new List<Bill>();
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(@"
+            SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, p.PaymentDate, p.AmountPaid AS PaymentAmount, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType
+            FROM dbo.vvtblBill b
+            LEFT JOIN dbo.vvtblCustomers c ON c.CustomerID = b.CustomerID
+            INNER JOIN dbo.vvtblBillPayment p ON p.BillID = b.BillID
+            WHERE (@FromDate IS NULL OR CAST(p.PaymentDate AS date) >= CAST(@FromDate AS date))
+              AND (@ToDate IS NULL OR CAST(p.PaymentDate AS date) <= CAST(@ToDate AS date))
+            ORDER BY p.PaymentDate DESC", connection);
+
+        command.Parameters.Add("@FromDate", SqlDbType.Date).Value = (object?)(fromDate ?? (object)DBNull.Value) ?? DBNull.Value;
+        command.Parameters.Add("@ToDate", SqlDbType.Date).Value = (object?)(toDate ?? (object)DBNull.Value) ?? DBNull.Value;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            result.Add(new Bill
+            {
+                BillID = reader.IsDBNull(reader.GetOrdinal("BillID")) ? null : reader.GetInt32(reader.GetOrdinal("BillID")),
+                CustomerID = reader.IsDBNull(reader.GetOrdinal("CustomerID")) ? null : reader.GetInt32(reader.GetOrdinal("CustomerID")),
+                CustomerName = reader.IsDBNull(reader.GetOrdinal("CustomerName")) ? null : reader.GetString(reader.GetOrdinal("CustomerName")),
+                MobileNumber = reader.IsDBNull(reader.GetOrdinal("MobileNumber")) ? null : reader.GetString(reader.GetOrdinal("MobileNumber")),
+                BillDate = reader.IsDBNull(reader.GetOrdinal("BillDate")) ? null : reader.GetDateTime(reader.GetOrdinal("BillDate")),
+                PaymentDate = reader.IsDBNull(reader.GetOrdinal("PaymentDate")) ? null : reader.GetDateTime(reader.GetOrdinal("PaymentDate")),
+                PaymentAmount = reader.IsDBNull(reader.GetOrdinal("PaymentAmount")) ? null : reader.GetInt32(reader.GetOrdinal("PaymentAmount")),
+                Files = reader.IsDBNull(reader.GetOrdinal("Files")) ? null : reader.GetString(reader.GetOrdinal("Files")),
+                FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize")) ? null : reader.GetInt32(reader.GetOrdinal("FileSize")),
+                BookingTime = reader.IsDBNull(reader.GetOrdinal("BookingTime")) ? null : reader.GetDateTime(reader.GetOrdinal("BookingTime")),
+                DeliveryTime = reader.IsDBNull(reader.GetOrdinal("DeliveryTime")) ? null : reader.GetDateTime(reader.GetOrdinal("DeliveryTime")),
+                Total = reader.IsDBNull(reader.GetOrdinal("Total")) ? null : reader.GetDouble(reader.GetOrdinal("Total")),
+                Advance = reader.IsDBNull(reader.GetOrdinal("Advance")) ? null : reader.GetDouble(reader.GetOrdinal("Advance")),
+                BalancePaid = reader.IsDBNull(reader.GetOrdinal("BalancePaid")) ? null : reader.GetInt32(reader.GetOrdinal("BalancePaid")),
+                Discount = reader.IsDBNull(reader.GetOrdinal("Discount")) ? null : reader.GetInt32(reader.GetOrdinal("Discount")),
+                BillType = reader.IsDBNull(reader.GetOrdinal("BillType")) ? null : reader.GetString(reader.GetOrdinal("BillType"))
+            });
+        }
+
+        return result;
+    }
+
     public async Task<List<SheetOption>> GetSheetsAsync(string sheetType)
     {
         var result = new List<SheetOption>();
@@ -371,9 +416,13 @@ public class BillRepository
 
         if (bill == null) return null;
 
-        // load lines
+        // load lines with sheet names
         bill.Lines = new List<BillLine>();
-        await using (var linesCmd = new SqlCommand(@"SELECT SheetTypeID, Quanity, Price, Amount FROM dbo.vvtblBillDetails WHERE BillID = @BillID", connection))
+        await using (var linesCmd = new SqlCommand(@"
+            SELECT d.SheetTypeID, s.Name AS SheetName, d.Quanity, d.Price, d.Amount
+            FROM dbo.vvtblBillDetails d
+            LEFT JOIN dbo.vvtblSheets s ON s.ID = d.SheetTypeID
+            WHERE d.BillID = @BillID", connection))
         {
             linesCmd.Parameters.Add("@BillID", SqlDbType.Int).Value = bill.BillID ?? 0;
             await using var lr = await linesCmd.ExecuteReaderAsync();
@@ -382,6 +431,7 @@ public class BillRepository
                 bill.Lines.Add(new BillLine
                 {
                     SheetTypeID = lr.IsDBNull(lr.GetOrdinal("SheetTypeID")) ? null : lr.GetInt32(lr.GetOrdinal("SheetTypeID")),
+                    SheetName = lr.IsDBNull(lr.GetOrdinal("SheetName")) ? null : lr.GetString(lr.GetOrdinal("SheetName")),
                     Quantity = lr.IsDBNull(lr.GetOrdinal("Quanity")) ? null : lr.GetInt32(lr.GetOrdinal("Quanity")),
                     Price = lr.IsDBNull(lr.GetOrdinal("Price")) ? null : (double?)Convert.ToDouble(lr.GetValue(lr.GetOrdinal("Price"))),
                     Amount = lr.IsDBNull(lr.GetOrdinal("Amount")) ? null : (double?)Convert.ToDouble(lr.GetValue(lr.GetOrdinal("Amount")))
@@ -414,7 +464,7 @@ public class BillRepository
 
     private static void UpdateComputedPaymentTotals(Bill model)
     {
-        var totalPaid = model.AdvancePayments?.Where(p => p.AmountPaid.HasValue).Sum(p => p.AmountPaid.Value) ?? 0;
+        var totalPaid = model.AdvancePayments?.Where(p => p.AmountPaid.HasValue).Sum(p => p.AmountPaid ?? 0) ?? 0;
         model.BalancePaid = totalPaid;
 
         if (model.BookingTime is null)
@@ -426,7 +476,7 @@ public class BillRepository
         var bookingDate = model.BookingTime.Value.Date;
         var sameDayAdvance = model.AdvancePayments?
             .Where(p => p.AmountPaid.HasValue && p.PaymentDate.HasValue && p.PaymentDate.Value.Date == bookingDate)
-            .Sum(p => p.AmountPaid.Value) ?? 0;
+            .Sum(p => p.AmountPaid ?? 0) ?? 0;
 
         model.Advance = sameDayAdvance;
     }

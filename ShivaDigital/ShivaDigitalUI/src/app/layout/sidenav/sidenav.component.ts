@@ -40,23 +40,11 @@ export const NAV_LINKS: NavLink[] = [
     route: '/home',
     icon: 'home',
   },
-  {
-    label: 'Dashboard',
-    icon: 'dashboard',
-    children: [
-      { label: 'Overview', route: '/dashboard/overview', icon: 'bar_chart' },
-      { label: 'Reports', route: '/dashboard/reports', icon: 'insert_chart' },
-      { label: 'Customer', route: '/customer', icon: 'person' },
-      { label: 'Bill', route: '/bill', icon: 'receipt' },
-      { label: 'Bill Search', route: '/bill-search', icon: 'search' }
-    ]
-  },
-  {
-    label: 'Settings',
-    icon: 'settings',
-    children: [
-      { label: 'Profile', route: '/settings/profile', icon: 'person' },
-      { label: 'Security', route: '/settings/security', icon: 'security' },
-    ]
-  }
+  { label: 'Customer', route: '/customer', icon: 'person' },
+  { label: 'Bill', route: '/bill', icon: 'receipt' },
+  { label: 'Bill Search', route: '/bill-search', icon: 'search' },
+  { label: 'Payment Search', route: '/payment-search', icon: 'payment' },
+  { label: 'Profile', route: '/settings/profile', icon: 'person' },
+  { label: 'Security', route: '/settings/security', icon: 'security' }
+
 ];

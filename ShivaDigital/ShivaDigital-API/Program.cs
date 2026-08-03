@@ -8,6 +8,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddScoped<CustomerRepository>();
 builder.Services.AddScoped<BillRepository>();
+builder.Services.AddScoped<AuthRepository>();
 
 builder.Services.AddCors(options =>
 {

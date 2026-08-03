@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Customer, CustomerService } from '../../services/customer.service';
+import { ExportService } from '../../services/export.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -25,7 +26,10 @@ export class CustomerListComponent implements OnInit, OnChanges {
   @Output() edit = new EventEmitter<Customer>();
   @Output() deleted = new EventEmitter<void>();
 
-  constructor(private customerService: CustomerService) {}
+  constructor(
+    private customerService: CustomerService,
+    private exportService: ExportService
+  ) {}
 
   ngOnInit() {
     this.loadCustomers();
@@ -93,6 +97,14 @@ export class CustomerListComponent implements OnInit, OnChanges {
     }
     this.currentPage = page;
     this.updatePagedCustomers();
+  }
+
+  exportCustomers() {
+    this.exportService.buildCsv(
+      this.filteredCustomers,
+      ['CustomerName', 'MobileNumber', 'Address', 'PanNumber', 'AadharNumber'],
+      'customers'
+    );
   }
 
   onEdit(customer: Customer) {

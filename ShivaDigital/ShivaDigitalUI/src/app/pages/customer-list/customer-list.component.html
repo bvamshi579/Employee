@@ -5,6 +5,7 @@
       <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="applyFilter()" placeholder="Search by name, mobile, address..." />
     </div>
     <div class="summary">{{ filteredCustomers.length }} customer(s)</div>
+    <button type="button" (click)="exportCustomers()">Export to Excel</button>
   </div>
 
   <div class="pagination" *ngIf="filteredCustomers.length > pageSize">

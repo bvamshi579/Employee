@@ -19,6 +19,12 @@ public class Bill
     [JsonPropertyName("BillDate")]
     public DateTime? BillDate { get; set; }
 
+    [JsonPropertyName("PaymentDate")]
+    public DateTime? PaymentDate { get; set; }
+
+    [JsonPropertyName("PaymentAmount")]
+    public int? PaymentAmount { get; set; }
+
     [JsonPropertyName("Files")]
     public string? Files { get; set; }
 

@@ -24,6 +24,8 @@ export interface Bill {
   CustomerName?: string;
   MobileNumber?: string;
   BillDate?: string;
+  PaymentDate?: string;
+  PaymentAmount?: number;
   Files?: string;
   FileSize?: number;
   BookingTime?: string;
@@ -64,6 +66,13 @@ export class BillService {
     if (fromDate) params = params.set('fromDate', fromDate);
     if (toDate) params = params.set('toDate', toDate);
     return this.http.get<Bill[]>(`${this.apiUrl}/search`, { params });
+  }
+
+  searchBillsByPaymentDate(fromDate?: string, toDate?: string): Observable<Bill[]> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    return this.http.get<Bill[]>(`${this.apiUrl}/search/payments`, { params });
   }
 
   getSheets(sheetType: string): Observable<SheetOption[]> {

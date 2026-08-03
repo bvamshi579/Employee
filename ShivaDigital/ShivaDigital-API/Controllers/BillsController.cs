@@ -31,6 +31,15 @@ public class BillsController : ControllerBase
         return Ok(bills);
     }
 
+    [HttpGet("search/payments")]
+    public async Task<ActionResult<IEnumerable<Bill>>> SearchBillsByPaymentDate([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+    {
+        var effectiveFrom = fromDate ?? DateTime.Today.AddMonths(-1);
+        var effectiveTo = toDate ?? DateTime.Today;
+        var bills = await _repository.SearchByPaymentDateAsync(effectiveFrom, effectiveTo);
+        return Ok(bills);
+    }
+
     [HttpGet("sheets/{sheetType}")]
     public async Task<ActionResult<IEnumerable<SheetOption>>> GetSheets(string sheetType)
     {

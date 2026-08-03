@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Customer, CustomerService } from '../../services/customer.service';
 import { Bill, BillLine, BillPayment, BillService, SheetOption, FileSizeOption } from '../../services/bill.service';
+import { ExportService } from '../../services/export.service';
 
 @Component({
   selector: 'app-bill',
@@ -15,6 +16,7 @@ import { Bill, BillLine, BillPayment, BillService, SheetOption, FileSizeOption }
 export class BillComponent implements OnInit {
   isEditMode = false;
   isSearchOnlyMode = false;
+  searchMode: 'search' | 'payment-search' = 'search';
   currentBillId: number | null = null;
   customers: Customer[] = [];
   bills: Bill[] = [];
@@ -73,11 +75,14 @@ export class BillComponent implements OnInit {
     private customerService: CustomerService,
     private billService: BillService,
     private cdr: ChangeDetectorRef,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private exportService: ExportService
   ) {}
 
   ngOnInit() {
-    this.isSearchOnlyMode = this.route.snapshot.data['mode'] === 'search';
+    const routeMode = this.route.snapshot.data['mode'];
+    this.searchMode = routeMode === 'payment-search' ? 'payment-search' : 'search';
+    this.isSearchOnlyMode = routeMode === 'search' || routeMode === 'payment-search';
     this.loadCustomers();
     this.loadSheets();
     this.loadFileSizes();
@@ -134,9 +139,20 @@ export class BillComponent implements OnInit {
     this.selectedSearchBill = null;
     this.selectedPaymentBill = null;
 
-    this.billService.searchBills(this.searchFromDate, this.searchToDate).subscribe({
+    const lookup = this.searchMode === 'payment-search'
+      ? this.billService.searchBillsByPaymentDate(this.searchFromDate, this.searchToDate)
+      : this.billService.searchBills(this.searchFromDate, this.searchToDate);
+
+    lookup.subscribe({
       next: (data) => {
-        this.searchBills = data || [];
+        const bills = data || [];
+        this.searchBills = this.searchMode === 'payment-search'
+          ? [...bills].sort((a, b) => {
+              const aTime = a.PaymentDate ? new Date(a.PaymentDate).getTime() : 0;
+              const bTime = b.PaymentDate ? new Date(b.PaymentDate).getTime() : 0;
+              return bTime - aTime;
+            })
+          : bills;
         this.searchGridPage = 1;
         this.searchGridFilter = '';
         this.searchLoading = false;
@@ -503,8 +519,50 @@ export class BillComponent implements OnInit {
     return this.selectedSearchBill?.AdvancePayments?.length ? this.selectedSearchBill.AdvancePayments || [] : this.payments;
   }
 
+  get sortedAdvancePayments(): BillPayment[] {
+    return [...(this.selectedSearchBill?.AdvancePayments || [])].sort((a, b) => {
+      const aTime = a.PaymentDate ? new Date(a.PaymentDate).getTime() : 0;
+      const bTime = b.PaymentDate ? new Date(b.PaymentDate).getTime() : 0;
+      return bTime - aTime;
+    });
+  }
+
   printBill() {
     window.print();
+  }
+
+  private buildBillExportRows(bills: Bill[]) {
+    return bills.map((bill) => ({
+      BillID: bill.BillID,
+      CustomerName: bill.CustomerName,
+      MobileNumber: bill.MobileNumber,
+      BillDate: bill.BillDate,
+      PaymentDate: bill.PaymentDate,
+      PaymentAmount: bill.PaymentAmount,
+      Total: bill.Total,
+      Discount: bill.Discount,
+      Payable: this.getPayable(bill),
+      TotalPaid: this.getTotalPaid(bill),
+      BalanceDue: this.getBalanceDue(bill),
+      Advance: bill.Advance,
+      Files: bill.Files
+    }));
+  }
+
+  exportSearchBills() {
+    this.exportService.buildCsv(
+      this.buildBillExportRows(this.filteredSearchBills),
+      ['BillID', 'CustomerName', 'MobileNumber', 'BillDate', 'PaymentDate', 'PaymentAmount', 'Total', 'Discount', 'Payable', 'TotalPaid', 'BalanceDue', 'Advance'],
+      'search-bills'
+    );
+  }
+
+  exportRecentBills() {
+    this.exportService.buildCsv(
+      this.buildBillExportRows(this.filteredBills),
+      ['BillID', 'CustomerName', 'Files', 'Total', 'Advance'],
+      'recent-bills'
+    );
   }
 
   formatDateForInput(dateStr?: string) {

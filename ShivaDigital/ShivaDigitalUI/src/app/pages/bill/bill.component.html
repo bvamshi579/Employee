@@ -1,7 +1,7 @@
 <div class="bill-page">
   <div class="card search-card" *ngIf="isSearchOnlyMode">
     <ng-container *ngIf="!selectedSearchBill">
-    <h3>Search Bills by Booking Date</h3>
+    <h3>Search Bills by {{ searchMode === 'payment-search' ? 'Payment Date' : 'Booking Date' }}</h3>
     <div class="form-grid">
       <div class="form-group">
         <label>From date</label>
@@ -20,47 +20,59 @@
     <div *ngIf="searchLoading" class="message">Loading bills...</div>
     <div *ngIf="searchError" class="field-error">{{ searchError }}</div>
 
-    <div class="toolbar-row" *ngIf="searchBills.length && !selectedSearchBill">
-      <input type="text" [(ngModel)]="searchGridFilter" (ngModelChange)="onSearchGridFilterChange()" placeholder="Filter by bill id, customer or mobile" />
-      <div class="pager">
-        <button type="button" (click)="prevSearchGridPage()">Prev</button>
-        <span>Page {{ searchGridPage }} / {{ searchGridTotalPages }}</span>
-        <button type="button" (click)="nextSearchGridPage()">Next</button>
+    <div class="pagination" *ngIf="filteredSearchBills.length > searchGridPageSize">
+      <button type="button" (click)="prevSearchGridPage()" [disabled]="searchGridPage === 1">Prev</button>
+      <span>Page {{ searchGridPage }} of {{ searchGridTotalPages }}</span>
+      <button type="button" (click)="nextSearchGridPage()" [disabled]="searchGridPage === searchGridTotalPages">Next</button>
+    </div>
+
+    <div class="list-toolbar bill-list-toolbar" *ngIf="searchBills.length && !selectedSearchBill">
+      <div class="search-box bill-search-box">
+        <span>🔎</span>
+        <input type="text" [(ngModel)]="searchGridFilter" (ngModelChange)="onSearchGridFilterChange()" placeholder="Filter by bill id, customer or mobile" />
       </div>
+      <div class="summary">{{ filteredSearchBills.length }} bill(s)</div>
+      <button type="button" class="export-btn" (click)="exportSearchBills()">Export to Excel</button>
     </div>
 
     <div class="table-wrap" *ngIf="searchBills.length && !selectedSearchBill">
-      <table class="bill-list no-print">
+      <table class="bill-list no-print bill-grid-table">
         <thead>
           <tr>
-            <th>Bill ID</th>
-            <th>Customer</th>
-            <th>Mobile</th>
-            <th>Bill Date</th>
-            <th>Total</th>
-            <th>Discount</th>
-            <th>Payable</th>
-            <th>Total Paid</th>
-            <th>Balance Due</th>
-            <th>Advance</th>
+            <th class="align-left">Bill ID</th>
+            <th class="align-left">Customer</th>
+            <th class="align-left">Mobile</th>
+            <th class="align-center">Bill Date</th>
+            <th *ngIf="searchMode === 'payment-search'" class="align-center">Payment Date</th>
+            <th *ngIf="searchMode === 'payment-search'" class="align-right">Payment Amount</th>
+            <th class="align-right">Total</th>
+            <th class="align-right">Discount</th>
+            <th class="align-right">Payable</th>
+            <th class="align-right">Total Paid</th>
+            <th class="align-right">Balance Due</th>
+            <th class="align-right">Advance</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let bill of pagedSearchBills">
-            <td><button type="button" class="link-button" (click)="selectSearchBill(bill)">{{ bill.BillID }}</button></td>
-            <td>{{ bill.CustomerName }}</td>
-            <td>{{ bill.MobileNumber }}</td>
-            <td>{{ bill.BillDate | date:'dd/MM/yyyy' }}</td>
-            <td>{{ bill.Total | number:'1.0-0' }}</td>
-            <td>{{ bill.Discount | number:'1.0-0' }}</td>
-            <td>{{ getPayable(bill) | number:'1.0-0' }}</td>
-            <td>{{ getTotalPaid(bill) | number:'1.0-0' }}</td>
-            <td>{{ getBalanceDue(bill) | number:'1.0-0' }}</td>
-            <td>{{ bill.Advance | number:'1.0-0' }}</td>
+            <td class="align-left"><button type="button" class="link-button" (click)="selectSearchBill(bill)">{{ bill.BillID }}</button></td>
+            <td class="align-left">{{ bill.CustomerName }}</td>
+            <td class="align-left">{{ bill.MobileNumber }}</td>
+            <td class="align-center">{{ bill.BillDate | date:'dd/MM/yyyy' }}</td>
+            <td *ngIf="searchMode === 'payment-search'" class="align-center">{{ bill.PaymentDate | date:'dd/MM/yyyy' }}</td>
+            <td *ngIf="searchMode === 'payment-search'" class="align-right">{{ bill.PaymentAmount | number:'1.0-0' }}</td>
+            <td class="align-right">{{ bill.Total | number:'1.0-0' }}</td>
+            <td class="align-right">{{ bill.Discount | number:'1.0-0' }}</td>
+            <td class="align-right">{{ getPayable(bill) | number:'1.0-0' }}</td>
+            <td class="align-right">{{ getTotalPaid(bill) | number:'1.0-0' }}</td>
+            <td class="align-right">{{ getBalanceDue(bill) | number:'1.0-0' }}</td>
+            <td class="align-right">{{ bill.Advance | number:'1.0-0' }}</td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    
 
     <div class="empty-state" *ngIf="!searchLoading && !searchBills.length">
       No bills found for the selected date range.
@@ -102,16 +114,20 @@
 
         <div class="payment-history">
           <h5>Previous Payments</h5>
-          <div *ngIf="selectedSearchBill.AdvancePayments?.length; else noPayments" class="payment-table">
-            <div class="payment-table-row payment-table-head">
-              <span>Amount</span>
-              <span>Date</span>
-            </div>
-            <div class="payment-table-row" *ngFor="let payment of selectedSearchBill.AdvancePayments">
-              <span>{{ payment.AmountPaid | number:'1.0-0' }}</span>
-              <span>{{ payment.PaymentDate | date:'dd/MM/yyyy hh:mm a' }}</span>
-            </div>
-          </div>
+          <table *ngIf="sortedAdvancePayments.length; else noPayments" class="payment-table">
+            <thead>
+              <tr class="payment-table-head">
+                <th class="align-left">Date</th>
+                <th class="align-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let payment of sortedAdvancePayments">
+                <td class="align-left">{{ payment.PaymentDate | date:'dd/MM/yyyy hh:mm a' }}</td>
+                <td class="align-right">{{ payment.AmountPaid | number:'1.0-0' }}</td>
+              </tr>
+            </tbody>
+          </table>
           <ng-template #noPayments>
             <div class="empty-state">No previous payments recorded for this bill.</div>
           </ng-template>
@@ -172,9 +188,10 @@
   </div>
 
   <ng-container *ngIf="!isSearchOnlyMode">
-  <h3>Create Bill</h3>
+  
 
   <div class="card no-print">
+    <h3>{{ isEditMode ? 'Edit Bill' : 'Create Bill' }}<span *ngIf="currentBillId"> — Bill ID: {{ currentBillId }}</span></h3>
     <div class="header-card" [class.active]="selectedCustomerName">
       <div class="header-title">Customer</div>
       <div class="header-name">{{ selectedCustomerName || 'No customer selected' }}</div>
@@ -320,34 +337,55 @@
     </div>
   </div>
 
-  <h4 class="no-print">Recent Bills</h4>
-  <div class="no-print" style="margin-bottom:0.6rem; display:flex; gap:0.5rem; align-items:center;">
-    <label style="font-weight:600;">Filter by Bill ID:</label>
-    <input [(ngModel)]="billIdFilter" (ngModelChange)="onFilterChange()" placeholder="Enter bill id" />
-    <div style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
-      <button type="button" (click)="prevPage()">Prev</button>
-      <span>Page {{page}} / {{ totalPages }}</span>
-      <button type="button" (click)="nextPage()">Next</button>
+  <div class="bill-list-panel no-print">
+    <h4>Recent Bills</h4>
+    <div class="pagination" *ngIf="filteredBills.length > pageSize">
+      <button type="button" (click)="prevPage()" [disabled]="page === 1">Prev</button>
+      <span>Page {{page}} of {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="page === totalPages">Next</button>
     </div>
-  </div>
 
-  <table class="bill-list no-print">
-    <tr>
-      <th>Action</th>
-      <th>Bill ID</th>
-      <th>Customer</th>
-      <th>Files</th>
-      <th>Total</th>
-      <th>Advance</th>
-    </tr>
+    <div class="list-toolbar bill-list-toolbar">
+      <div class="search-box bill-search-box">
+        <span>🔎</span>
+        <input [(ngModel)]="billIdFilter" (ngModelChange)="onFilterChange()" placeholder="Filter by bill id" />
+      </div>
+      <div class="summary">{{ filteredBills.length }} bill(s)</div>
+      <button type="button" class="export-btn" (click)="exportRecentBills()">Export to Excel</button>
+    </div>
+
+    <table class="bill-list no-print bill-grid-table">
+    <thead>
+      <tr>
+        <th>Bill ID</th>
+        <th>Customer</th>
+        <th class="align-center">Bill Date</th>
+        <th class="align-right">Total</th>
+        <th class="align-right">Discount</th>
+        <th class="align-right">Payable</th>
+        <th class="align-right">Total Paid</th>
+        <th class="align-right">Balance Due</th>
+        <th class="align-right">Advance</th>
+        <th>Files</th>
+      </tr>
+    </thead>
+    <tbody>
     <tr *ngFor="let bill of pagedBills">
-      <td><a href="#" class="edit-link" (click)="editBill(bill); $event.preventDefault()">Edit</a></td>
-      <td>{{ bill.BillID }}</td>
+      <td><button type="button" class="link-button" (click)="editBill(bill)">{{ bill.BillID }}</button></td>
       <td>{{ bill.CustomerName }}</td>
+      <td class="align-center">{{ bill.BillDate | date:'dd/MM/yyyy' }}</td>
+      <td class="align-right">{{ bill.Total | number:'1.0-0' }}</td>
+      <td class="align-right">{{ bill.Discount | number:'1.0-0' }}</td>
+      <td class="align-right">{{ getPayable(bill) | number:'1.0-0' }}</td>
+      <td class="align-right">{{ getTotalPaid(bill) | number:'1.0-0' }}</td>
+      <td class="align-right">{{ getBalanceDue(bill) | number:'1.0-0' }}</td>
+      <td class="align-right">{{ bill.Advance | number:'1.0-0' }}</td>
       <td>{{ bill.Files }}</td>
-      <td>{{ bill.Total | number:'1.0-0' }}</td>
-      <td>{{ bill.Advance | number:'1.0-0' }}</td>
     </tr>
-  </table>
+    </tbody>
+    </table>
+
+    
+  </div>
   </ng-container>
 </div>
