@@ -1,0 +1,16 @@
+# --- Visual Studio / C# / .NET ---
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+
+# --- Angular / Node ---
+.angular/
+dist/
+.nx/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
