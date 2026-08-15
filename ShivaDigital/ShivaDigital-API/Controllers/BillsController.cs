@@ -70,11 +70,63 @@ public class BillsController : ControllerBase
         return Ok(fileSizes);
     }
 
+    [HttpGet("inventory/{sheetType}")]
+    public async Task<ActionResult<IEnumerable<SheetInventory>>> GetInventory(string sheetType)
+    {
+        var inv = await _repository.GetInventoryAsync(sheetType);
+        return Ok(inv);
+    }
+
+    [HttpPost("inventory")]
+    public async Task<IActionResult> AddInventory([FromBody] InventoryRequest req)
+    {
+        if (req == null || req.SheetTypeID <= 0 || req.Quantity == 0) return BadRequest();
+        await _repository.AddInventoryAsync(req.SheetTypeID, req.Quantity, req.SourceType, req.SourceRef, req.PerformedBy, req.Comment);
+        return Ok();
+    }
+
+    [HttpGet("inventory/transactions")]
+    public async Task<ActionResult<IEnumerable<SheetInventoryTx>>> GetInventoryTransactions([FromQuery] int? sheetTypeId, [FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate, [FromQuery] string? txType, [FromQuery] int page = 1, [FromQuery] int pageSize = 100)
+    {
+        var rows = await _repository.GetInventoryTransactionsAsync(sheetTypeId, fromDate, toDate, txType, page, pageSize);
+        return Ok(rows);
+    }
+
+    [HttpPost("inventory/transactions")]
+    public async Task<IActionResult> AddInventoryTransaction([FromBody] InventoryTxRequest req)
+    {
+        if (req == null || req.SheetTypeID <= 0 || req.Quantity == 0 || string.IsNullOrEmpty(req.TxType)) return BadRequest();
+        var delta = req.TxType.ToUpper() == "IN" ? Math.Abs(req.Quantity) : -Math.Abs(req.Quantity);
+        await _repository.AddInventoryAsync(req.SheetTypeID, delta, req.SourceType, req.SourceRef, req.PerformedBy, req.Comment);
+        return Ok();
+    }
+
     [HttpPost]
     public async Task<ActionResult<Bill>> CreateBill(Bill bill)
     {
         var created = await _repository.CreateAsync(bill);
         return CreatedAtAction(nameof(GetBills), new { id = created.BillID ?? 0 }, created);
+    }
+
+    public class InventoryRequest
+    {
+        public int SheetTypeID { get; set; }
+        public int Quantity { get; set; }
+        public string? SourceType { get; set; }
+        public string? SourceRef { get; set; }
+        public string? PerformedBy { get; set; }
+        public string? Comment { get; set; }
+    }
+
+    public class InventoryTxRequest
+    {
+        public int SheetTypeID { get; set; }
+        public string? TxType { get; set; }
+        public int Quantity { get; set; }
+        public string? SourceType { get; set; }
+        public string? SourceRef { get; set; }
+        public string? PerformedBy { get; set; }
+        public string? Comment { get; set; }
     }
 
     [HttpGet("{id}")]

@@ -45,6 +45,7 @@ export const NAV_LINKS: NavLink[] = [
   { label: 'Bill Search', route: '/bill-search', icon: 'search' },
   { label: 'Payment Search', route: '/payment-search', icon: 'payment' },
   { label: 'Correction Report', route: '/correction-report', icon: 'report' },
+  { label: 'Inventory Report', route: '/inventory', icon: 'report' },
   { label: 'Profile', route: '/settings/profile', icon: 'person' },
   { label: 'Security', route: '/settings/security', icon: 'security' }
 

@@ -1,0 +1,144 @@
+<div class="inventory-page">
+  <section class="card inventory-header">
+    <div>
+      <h3>Inventory Ledger</h3>
+      <p>Current stock and all sheet movements for {{ sheetType }}.</p>
+    </div>
+    <div class="summary-total">
+      <span>Total on hand</span>
+      <strong>{{ totalOnHand }}</strong>
+    </div>
+  </section>
+
+  <section class="card quick-add">
+    <h4>Quick Add / Adjust</h4>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Sheet</label>
+        <select [(ngModel)]="selectedSheetId" (change)="loadTransactions()">
+          <option [ngValue]="null">Select sheet</option>
+          <option *ngFor="let s of sheets" [ngValue]="s.SheetTypeID">{{ s.Name }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select [(ngModel)]="txType">
+          <option value="IN">IN</option>
+          <option value="OUT">OUT</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" min="1" [(ngModel)]="quantityToAdd" />
+      </div>
+      <div class="form-group">
+        <label>Source</label>
+        <select [(ngModel)]="sourceType">
+          <option value="Manual">Manual</option>
+          <option value="Bill">Bill</option>
+          <option value="Purchase">Purchase</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Reference</label>
+        <input type="text" [(ngModel)]="sourceRef" placeholder="Bill ID / PO / note" />
+      </div>
+      <div class="form-group">
+        <label>Performed By</label>
+        <input type="text" [(ngModel)]="performedBy" placeholder="User name" />
+      </div>
+      <div class="form-group">
+        <label>Comment</label>
+        <input type="text" [(ngModel)]="comment" placeholder="Reason or notes" />
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="datetime-local" [(ngModel)]="txDate" />
+      </div>
+      <div class="form-group action-row">
+        <button type="button" (click)="addManualTransaction()">Save movement</button>
+      </div>
+    </div>
+
+    <div *ngIf="message" class="success-message">{{ message }}</div>
+    <div *ngIf="error" class="field-error">{{ error }}</div>
+  </section>
+
+  <section class="card two-column-layout">
+    <div class="inventory-summary panel">
+      <div class="panel-header">
+        <h4>Sheet Summary</h4>
+        <input type="text" [(ngModel)]="searchText" placeholder="Search sheets" />
+      </div>
+
+      <table class="bill-grid-table compact-table">
+        <thead>
+          <tr>
+            <th>Sheet</th>
+            <th>On hand</th>
+            <th>Reserved</th>
+            <th>Avg. cost</th>
+            <th>Last activity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of filteredInventory" [class.selected-row]="selectedSheetId === item.SheetTypeID">
+            <td>{{ item.Name }}</td>
+            <td>{{ item.Quantity ?? 0 }}</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr *ngIf="!filteredInventory.length">
+            <td colspan="5" class="empty-state">No sheets found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ledger panel">
+      <div class="panel-header">
+        <h4>Transaction Ledger</h4>
+        <div class="filter-row">
+          <input type="date" [(ngModel)]="fromDate" (change)="loadTransactions()" />
+          <input type="date" [(ngModel)]="toDate" (change)="loadTransactions()" />
+          <select [(ngModel)]="txFilter" (change)="loadTransactions()">
+            <option value="ALL">All</option>
+            <option value="IN">IN</option>
+            <option value="OUT">OUT</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="bill-grid-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Sheet</th>
+              <th>Type</th>
+              <th>Quantity</th>
+              <th>Source</th>
+              <th>Reference</th>
+              <th>Balance after</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of transactions" [class.tx-in]="item.TxType === 'IN'" [class.tx-out]="item.TxType === 'OUT'">
+              <td>{{ formatDate(item.TxDate) }}</td>
+              <td>{{ getSheetName(item.SheetTypeID) }}</td>
+              <td>{{ item.TxType }}</td>
+              <td>{{ item.TxType === 'OUT' ? '-' : '+' }}{{ item.Quantity }}</td>
+              <td>{{ item.SourceType }}</td>
+              <td>{{ item.SourceRef || item.Comment || '—' }}</td>
+              <td>{{ item.BalanceAfter ?? 0 }}</td>
+            </tr>
+            <tr *ngIf="!transactions.length">
+              <td colspan="7" class="empty-state">No transactions found for the filters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>

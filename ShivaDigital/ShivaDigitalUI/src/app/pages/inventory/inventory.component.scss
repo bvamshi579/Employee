@@ -1,0 +1,170 @@
+.inventory-page {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e8eef6;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  padding: 16px;
+}
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inventory-header h3,
+.quick-add h4,
+.panel-header h4 {
+  margin: 0 0 8px;
+}
+
+.summary-total {
+  min-width: 150px;
+  text-align: right;
+  display: grid;
+}
+
+.summary-total span {
+  color: #67748a;
+  font-size: 12px;
+}
+
+.summary-total strong {
+  font-size: 28px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group select,
+.form-group input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #dfeaf5;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.action-row {
+  justify-content: flex-end;
+}
+
+button {
+  background: #1d4ed8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #163db4;
+}
+
+.success-message {
+  color: #146c43;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.field-error {
+  color: #b00020;
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.two-column-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.1fr) minmax(440px, 2fr);
+  gap: 16px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-row input,
+.filter-row select,
+.panel-header input {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #dfeaf5;
+}
+
+.bill-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bill-grid-table th,
+.bill-grid-table td {
+  border: 1px solid #e4ebf3;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.bill-grid-table thead {
+  background: #f5f8fe;
+}
+
+.selected-row {
+  background: #edf5ff;
+}
+
+.tx-in {
+  background: rgba(22, 163, 74, 0.06);
+}
+
+.tx-out {
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.empty-state {
+  text-align: center;
+  color: #6b7280;
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+@media (max-width: 960px) {
+  .two-column-layout,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inventory-header,
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

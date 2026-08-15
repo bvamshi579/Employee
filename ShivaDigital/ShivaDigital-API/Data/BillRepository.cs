@@ -258,6 +258,131 @@ public class BillRepository
         return result;
     }
 
+    public async Task<List<SheetInventory>> GetInventoryAsync(string sheetType)
+    {
+        var result = new List<SheetInventory>();
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(@"
+            SELECT s.ID AS SheetTypeID, s.Name, ISNULL(i.Quantity,0) AS Quantity
+            FROM dbo.vvtblSheets s
+            LEFT JOIN dbo.vvtblSheetInventory i ON i.SheetTypeID = s.ID
+            WHERE s.SheetType = @SheetType
+            ORDER BY s.DisplayOrder, s.Name", connection);
+        command.Parameters.Add("@SheetType", SqlDbType.VarChar, 20).Value = sheetType;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            result.Add(new SheetInventory
+            {
+                SheetTypeID = reader.IsDBNull(reader.GetOrdinal("SheetTypeID")) ? null : reader.GetInt32(reader.GetOrdinal("SheetTypeID")),
+                Name = reader.IsDBNull(reader.GetOrdinal("Name")) ? null : reader.GetString(reader.GetOrdinal("Name")),
+                Quantity = reader.IsDBNull(reader.GetOrdinal("Quantity")) ? 0 : reader.GetInt32(reader.GetOrdinal("Quantity"))
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<List<SheetInventoryTx>> GetInventoryTransactionsAsync(int? sheetTypeId, DateTime? fromDate, DateTime? toDate, string? txType, int page = 1, int pageSize = 100)
+    {
+        var result = new List<SheetInventoryTx>();
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var where = "WHERE 1=1";
+        if (sheetTypeId.HasValue) where += " AND SheetTypeID = @SheetTypeID";
+        if (fromDate.HasValue) where += " AND TxDate >= @FromDate";
+        if (toDate.HasValue) where += " AND TxDate <= @ToDate";
+        if (!string.IsNullOrEmpty(txType)) where += " AND TxType = @TxType";
+
+        var sql = $@"
+            SELECT TxID, SheetTypeID, TxDate, TxType, Quantity, SourceType, SourceRef, PerformedBy, Comment, BalanceAfter
+            FROM dbo.vvtblSheetInventoryTx
+            {where}
+            ORDER BY TxDate DESC
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+        await using var cmd = new SqlCommand(sql, connection);
+        if (sheetTypeId.HasValue) cmd.Parameters.Add("@SheetTypeID", SqlDbType.Int).Value = sheetTypeId.Value;
+        if (fromDate.HasValue) cmd.Parameters.Add("@FromDate", SqlDbType.DateTime2).Value = fromDate.Value;
+        if (toDate.HasValue) cmd.Parameters.Add("@ToDate", SqlDbType.DateTime2).Value = toDate.Value;
+        if (!string.IsNullOrEmpty(txType)) cmd.Parameters.Add("@TxType", SqlDbType.VarChar, 10).Value = txType;
+        cmd.Parameters.Add("@Offset", SqlDbType.Int).Value = (page - 1) * pageSize;
+        cmd.Parameters.Add("@PageSize", SqlDbType.Int).Value = pageSize;
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            result.Add(new SheetInventoryTx
+            {
+                TxID = reader.IsDBNull(reader.GetOrdinal("TxID")) ? null : reader.GetInt32(reader.GetOrdinal("TxID")),
+                SheetTypeID = reader.IsDBNull(reader.GetOrdinal("SheetTypeID")) ? null : reader.GetInt32(reader.GetOrdinal("SheetTypeID")),
+                TxDate = reader.IsDBNull(reader.GetOrdinal("TxDate")) ? null : reader.GetDateTime(reader.GetOrdinal("TxDate")),
+                TxType = reader.IsDBNull(reader.GetOrdinal("TxType")) ? null : reader.GetString(reader.GetOrdinal("TxType")),
+                Quantity = reader.IsDBNull(reader.GetOrdinal("Quantity")) ? null : reader.GetInt32(reader.GetOrdinal("Quantity")),
+                SourceType = reader.IsDBNull(reader.GetOrdinal("SourceType")) ? null : reader.GetString(reader.GetOrdinal("SourceType")),
+                SourceRef = reader.IsDBNull(reader.GetOrdinal("SourceRef")) ? null : reader.GetString(reader.GetOrdinal("SourceRef")),
+                PerformedBy = reader.IsDBNull(reader.GetOrdinal("PerformedBy")) ? null : reader.GetString(reader.GetOrdinal("PerformedBy")),
+                Comment = reader.IsDBNull(reader.GetOrdinal("Comment")) ? null : reader.GetString(reader.GetOrdinal("Comment")),
+                BalanceAfter = reader.IsDBNull(reader.GetOrdinal("BalanceAfter")) ? null : reader.GetInt32(reader.GetOrdinal("BalanceAfter"))
+            });
+        }
+
+        return result;
+    }
+
+    public async Task AddInventoryAsync(int sheetTypeId, int quantityDelta, string? sourceType = null, string? sourceRef = null, string? performedBy = null, string? comment = null)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var currentQty = 0;
+        await using (var readCmd = new SqlCommand("SELECT Quantity FROM dbo.vvtblSheetInventory WHERE SheetTypeID = @SheetTypeID", connection))
+        {
+            readCmd.Parameters.Add("@SheetTypeID", SqlDbType.Int).Value = sheetTypeId;
+            var obj = await readCmd.ExecuteScalarAsync();
+            if (obj != null && obj != DBNull.Value)
+            {
+                currentQty = Convert.ToInt32(obj);
+            }
+        }
+
+        var newQty = currentQty + quantityDelta;
+
+        // Upsert: increment existing quantity or insert new row
+        await using (var upsertCmd = new SqlCommand(@"
+            IF EXISTS (SELECT 1 FROM dbo.vvtblSheetInventory WHERE SheetTypeID = @SheetTypeID)
+                UPDATE dbo.vvtblSheetInventory SET Quantity = @NewQty WHERE SheetTypeID = @SheetTypeID
+            ELSE
+                INSERT INTO dbo.vvtblSheetInventory (SheetTypeID, Quantity) VALUES (@SheetTypeID, @NewQty)", connection))
+        {
+            upsertCmd.Parameters.Add("@SheetTypeID", SqlDbType.Int).Value = sheetTypeId;
+            upsertCmd.Parameters.Add("@NewQty", SqlDbType.Int).Value = newQty;
+            await upsertCmd.ExecuteNonQueryAsync();
+        }
+
+        // insert transaction record
+        var txType = quantityDelta >= 0 ? "IN" : "OUT";
+        var txQty = Math.Abs(quantityDelta);
+        await using (var txCmd = new SqlCommand(@"
+            INSERT INTO dbo.vvtblSheetInventoryTx (SheetTypeID, TxDate, TxType, Quantity, SourceType, SourceRef, PerformedBy, Comment, BalanceAfter)
+            VALUES (@SheetTypeID, SYSUTCDATETIME(), @TxType, @Quantity, @SourceType, @SourceRef, @PerformedBy, @Comment, @BalanceAfter)", connection))
+        {
+            txCmd.Parameters.Add("@SheetTypeID", SqlDbType.Int).Value = sheetTypeId;
+            txCmd.Parameters.Add("@TxType", SqlDbType.VarChar, 10).Value = txType;
+            txCmd.Parameters.Add("@Quantity", SqlDbType.Int).Value = txQty;
+            txCmd.Parameters.Add("@SourceType", SqlDbType.VarChar, 32).Value = (object?)sourceType ?? DBNull.Value;
+            txCmd.Parameters.Add("@SourceRef", SqlDbType.VarChar, 128).Value = (object?)sourceRef ?? DBNull.Value;
+            txCmd.Parameters.Add("@PerformedBy", SqlDbType.VarChar, 128).Value = (object?)performedBy ?? DBNull.Value;
+            txCmd.Parameters.Add("@Comment", SqlDbType.VarChar, 512).Value = (object?)comment ?? DBNull.Value;
+            txCmd.Parameters.Add("@BalanceAfter", SqlDbType.Int).Value = newQty;
+            await txCmd.ExecuteNonQueryAsync();
+        }
+    }
+
     public async Task<Bill> CreateAsync(Bill model)
     {
         await using var connection = new SqlConnection(_connectionString);
@@ -316,6 +441,17 @@ public class BillRepository
                 lineCommand.Parameters.Add("@Price", SqlDbType.Int).Value = (int)(line.Price ?? 0);
                 lineCommand.Parameters.Add("@Amount", SqlDbType.Float).Value = (line.Amount ?? 0);
                 await lineCommand.ExecuteNonQueryAsync();
+                // decrement inventory for this sheet
+                if (line.SheetTypeID is not null && (line.Quantity ?? 0) != 0)
+                {
+                    await AddInventoryAsync(
+                        line.SheetTypeID ?? 0,
+                        -(line.Quantity ?? 0),
+                        "Bill",
+                        model.BillID?.ToString(),
+                        model.CorrectionUserName ?? "System",
+                        $"Bill {model.BillID} sheet issue");
+                }
             }
         }
 
@@ -380,6 +516,20 @@ public class BillRepository
 
         await command.ExecuteNonQueryAsync();
 
+        // load existing details so we can adjust inventory based on differences
+        var oldDetails = new Dictionary<int, int>();
+        await using (var oldCmd = new SqlCommand("SELECT SheetTypeID, Quanity FROM dbo.vvtblBillDetails WHERE BillID = @BillID", connection))
+        {
+            oldCmd.Parameters.Add("@BillID", SqlDbType.Int).Value = model.BillID ?? 0;
+            await using var or = await oldCmd.ExecuteReaderAsync();
+            while (await or.ReadAsync())
+            {
+                var sid = or.IsDBNull(or.GetOrdinal("SheetTypeID")) ? 0 : or.GetInt32(or.GetOrdinal("SheetTypeID"));
+                var q = or.IsDBNull(or.GetOrdinal("Quanity")) ? 0 : or.GetInt32(or.GetOrdinal("Quanity"));
+                if (sid != 0) oldDetails[sid] = oldDetails.ContainsKey(sid) ? oldDetails[sid] + q : q;
+            }
+        }
+
         // delete existing details and payments
         await using (var delDetails = new SqlCommand("DELETE FROM dbo.vvtblBillDetails WHERE BillID = @BillID", connection))
         {
@@ -394,6 +544,8 @@ public class BillRepository
         }
 
         // reinsert lines
+        // reinsert lines
+        var newDetails = new Dictionary<int, int>();
         if (model.Lines is { Count: > 0 })
         {
             foreach (var line in model.Lines)
@@ -408,6 +560,31 @@ public class BillRepository
                 lineCommand.Parameters.Add("@Price", SqlDbType.Int).Value = (int)(line.Price ?? 0);
                 lineCommand.Parameters.Add("@Amount", SqlDbType.Float).Value = (line.Amount ?? 0);
                 await lineCommand.ExecuteNonQueryAsync();
+
+                if (line.SheetTypeID is not null && (line.Quantity ?? 0) != 0)
+                {
+                    var sid = line.SheetTypeID ?? 0;
+                    newDetails[sid] = newDetails.ContainsKey(sid) ? newDetails[sid] + (line.Quantity ?? 0) : (line.Quantity ?? 0);
+                }
+            }
+        }
+
+        // adjust inventory: for each sheet, calculate old - new (positive means return to stock)
+        var allKeys = new HashSet<int>(oldDetails.Keys.Concat(newDetails.Keys));
+        foreach (var sid in allKeys)
+        {
+            oldDetails.TryGetValue(sid, out var oldQ);
+            newDetails.TryGetValue(sid, out var newQ);
+            var delta = oldQ - newQ; // positive -> add back to inventory, negative -> reduce more
+            if (delta != 0)
+            {
+                await AddInventoryAsync(
+                    sid,
+                    delta,
+                    "Bill",
+                    model.BillID?.ToString(),
+                    model.CorrectionUserName ?? "System",
+                    $"Bill {model.BillID} inventory adjustment");
             }
         }
 

@@ -49,6 +49,25 @@ export interface SheetOption {
   SheetType?: string;
 }
 
+export interface SheetInventory {
+  SheetTypeID?: number;
+  Name?: string;
+  Quantity?: number;
+}
+
+export interface SheetInventoryTx {
+  TxID?: number;
+  SheetTypeID?: number;
+  TxDate?: string;
+  TxType?: string;
+  Quantity?: number;
+  SourceType?: string;
+  SourceRef?: string;
+  PerformedBy?: string;
+  Comment?: string;
+  BalanceAfter?: number;
+}
+
 export interface FileSizeOption {
   ID?: number;
   FileSize?: string;
@@ -108,6 +127,29 @@ export class BillService {
 
   getFileSizes(): Observable<FileSizeOption[]> {
     return this.http.get<FileSizeOption[]>(`${this.apiUrl}/filesizes`);
+  }
+
+  getInventory(sheetType: string): Observable<SheetInventory[]> {
+    return this.http.get<SheetInventory[]>(`${this.apiUrl}/inventory/${sheetType}`);
+  }
+
+  addInventory(sheetTypeId: number, quantity: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/inventory`, { sheetTypeID: sheetTypeId, quantity });
+  }
+
+  getInventoryTransactions(sheetTypeId?: number, fromDate?: string, toDate?: string, txType?: string, page?: number, pageSize?: number): Observable<SheetInventoryTx[]> {
+    let params = new HttpParams();
+    if (sheetTypeId) params = params.set('sheetTypeId', String(sheetTypeId));
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    if (txType) params = params.set('txType', txType);
+    if (page) params = params.set('page', String(page));
+    if (pageSize) params = params.set('pageSize', String(pageSize));
+    return this.http.get<SheetInventoryTx[]>(`${this.apiUrl}/inventory/transactions`, { params });
+  }
+
+  addInventoryTransaction(req: { sheetTypeID: number; txType: string; quantity: number; sourceType?: string; sourceRef?: string; performedBy?: string; comment?: string }): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/inventory/transactions`, req);
   }
 
   createBill(bill: Bill): Observable<Bill> {
