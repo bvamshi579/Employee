@@ -146,7 +146,6 @@
         <div><strong>Files:</strong> {{ printableFiles }}</div>
         <div><strong>File Size:</strong> {{ printableFileSize || '—' }}</div>
         <div><strong>Booking Time:</strong> {{ printableBooking ? (printableBooking | date:'dd/MM/yyyy hh:mm a') : '—' }}</div>
-        <div><strong>Delivery Time:</strong> {{ printableDelivery ? (printableDelivery | date:'dd/MM/yyyy hh:mm a') : '—' }}</div>
         <div><strong>Total:</strong> {{ printableTotal | number:'1.0-0' }}</div>
         <div><strong>Discount:</strong> {{ printableDiscount | number:'1.0-0' }}</div>
         <div><strong>Total Payable:</strong> {{ printablePayable | number:'1.0-0' }}</div>
@@ -230,13 +229,6 @@
         <input type="datetime-local" [(ngModel)]="bookingTime" disabled />
         <div class="field-error" *ngIf="fieldErrors.bookingTime">{{ fieldErrors.bookingTime }}</div>
       </div>
-
-      <div class="form-group">
-        <label>Delivery Time</label>
-        <input type="datetime-local" [(ngModel)]="deliveryTime" />
-        <div class="field-error" *ngIf="fieldErrors.deliveryTime">{{ fieldErrors.deliveryTime }}</div>
-      </div>
-
       <div class="form-group">
         <label>Discount</label>
         <input type="number" [(ngModel)]="discount" (ngModelChange)="recalculateTotals()" />
@@ -279,7 +271,7 @@
     </div>
 
     <div class="actions">
-      <button *ngIf="isEditMode" type="button" class="print-btn" (click)="printBill()">Print Bill</button>
+      <button type="button" class="print-btn" (click)="printBill()">Print Bill</button>
       <button type="button" (click)="saveBill()">Save Bill</button>
     </div>
 
@@ -296,7 +288,6 @@
         <div><strong>Files:</strong> {{ printableFiles }}</div>
         <div><strong>File Size:</strong> {{ printableFileSize || '—' }}</div>
         <div><strong>Booking Time:</strong> {{ printableBooking ? (printableBooking | date:'dd/MM/yyyy hh:mm a') : '—' }}</div>
-        <div><strong>Delivery Time:</strong> {{ printableDelivery ? (printableDelivery | date:'dd/MM/yyyy hh:mm a') : '—' }}</div>
         <div><strong>Total:</strong> {{ printableTotal | number:'1.0-0' }}</div>
         <div><strong>Discount:</strong> {{ printableDiscount | number:'1.0-0' }}</div>
         <div><strong>Total Payable:</strong> {{ printablePayable | number:'1.0-0' }}</div>

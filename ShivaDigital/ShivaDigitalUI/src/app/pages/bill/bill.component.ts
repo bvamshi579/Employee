@@ -692,23 +692,13 @@ export class BillComponent implements OnInit {
     if (!this.bookingTime) {
       this.fieldErrors.bookingTime = 'Booking time is required.';
     }
-    if (!this.deliveryTime) {
-      this.fieldErrors.deliveryTime = 'Delivery time is required.';
-    }
-    if (this.bookingTime && this.deliveryTime) {
-      const booking = new Date(this.bookingTime);
-      const delivery = new Date(this.deliveryTime);
-      if (delivery.getTime() < booking.getTime()) {
-        this.fieldErrors.deliveryTime = 'Delivery time must be greater than or equal to booking time.';
-      }
-    }
     const selectedLines = this.lines.filter((l) => (l.Quantity ?? 0) > 0);
     if (!selectedLines.length) {
       this.fieldErrors.lines = 'At least one sheet quantity must be greater than zero.';
     }
 
     if (Object.keys(this.fieldErrors).length) {
-      this.message = this.fieldErrors.customer || this.fieldErrors.files || this.fieldErrors.fileSize || this.fieldErrors.bookingTime || this.fieldErrors.deliveryTime || this.fieldErrors.lines || 'Please correct the highlighted fields.';
+      this.message = this.fieldErrors.customer || this.fieldErrors.files || this.fieldErrors.fileSize || this.fieldErrors.bookingTime || this.fieldErrors.lines || 'Please correct the highlighted fields.';
       return false;
     }
 

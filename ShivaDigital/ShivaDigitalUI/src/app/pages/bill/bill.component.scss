@@ -529,7 +529,7 @@ input:focus, select:focus {
   margin-top: 0.35rem;
 }
 
-.printable-bill{display:none;margin-top:1rem}.printable-bill-inner{border:1px solid #dbe7f8;border-radius:12px;padding:0.8rem;background:#fff}
+.printable-bill{display:none;margin-top:1rem}.printable-bill-inner{max-width:560px;border:1px solid #dbe7f8;border-radius:12px;padding:0.8rem;background:#fff}
 
 @media (max-width:1200px){.sheet-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
@@ -664,7 +664,7 @@ input:focus, select:focus {
 
   /* Center printable card and approximate original sizing */
   .printable-bill-inner {
-    max-width: 760px;
+    max-width: 560px;
     margin: 12px auto;
     padding: 18px;
     border-radius: 12px;
