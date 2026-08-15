@@ -369,7 +369,7 @@ public class BillRepository
         var txQty = Math.Abs(quantityDelta);
         await using (var txCmd = new SqlCommand(@"
             INSERT INTO dbo.vvtblSheetInventoryTx (SheetTypeID, TxDate, TxType, Quantity, SourceType, SourceRef, PerformedBy, Comment, BalanceAfter)
-            VALUES (@SheetTypeID, SYSUTCDATETIME(), @TxType, @Quantity, @SourceType, @SourceRef, @PerformedBy, @Comment, @BalanceAfter)", connection))
+            VALUES (@SheetTypeID, SYSDATETIME(), @TxType, @Quantity, @SourceType, @SourceRef, @PerformedBy, @Comment, @BalanceAfter)", connection))
         {
             txCmd.Parameters.Add("@SheetTypeID", SqlDbType.Int).Value = sheetTypeId;
             txCmd.Parameters.Add("@TxType", SqlDbType.VarChar, 10).Value = txType;

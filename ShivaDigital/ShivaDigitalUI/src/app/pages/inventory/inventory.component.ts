@@ -22,7 +22,7 @@ export class InventoryComponent implements OnInit {
   fromDate = '';
   toDate = '';
   quantityToAdd = 0;
-  txType: 'IN' | 'OUT' = 'OUT';
+  txType: 'IN' | 'OUT' = 'IN';
   sourceType = 'Manual';
   sourceRef = '';
   comment = '';

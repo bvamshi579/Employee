@@ -27,7 +27,7 @@ BEGIN
     CREATE TABLE dbo.vvtblSheetInventoryTx (
         TxID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
         SheetTypeID INT NOT NULL,
-        TxDate DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+        TxDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
         TxType VARCHAR(10) NOT NULL, -- 'IN' or 'OUT'
         Quantity INT NOT NULL,
         SourceType VARCHAR(32) NULL, -- e.g. 'Bill', 'Manual', 'Purchase'
