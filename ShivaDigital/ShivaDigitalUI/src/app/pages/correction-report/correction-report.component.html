@@ -1,4 +1,4 @@
-<div class="card">
+<div class="card search-card">
   <h3>Correction User Report</h3>
   <div class="form-grid">
     <div class="form-group">
@@ -26,7 +26,7 @@
   <div *ngIf="message" class="field-error">{{ message }}</div>
 
   <div *ngIf="rows.length">
-    <div class="list-toolbar bill-list-toolbar">
+    <div class="list-toolbar">
       <div class="search-box bill-search-box">
         <span>🔎</span>
         <input type="text" [(ngModel)]="searchGridFilter" placeholder="Filter by bill id or sheet name" />

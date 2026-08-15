@@ -2,11 +2,38 @@
   padding: 16px;
 }
 
+.search-card {
+  margin-bottom: 1.25rem;
+}
+
+/* Make search button span full width like bill search */
+.form-group.wide { grid-column: 1 / -1; }
+
+/* Match bill card chrome */
+.card { background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%); border-radius:12px; padding:0.9rem; box-shadow:0 8px 20px rgba(25,118,210,0.10); }
+
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 220px;
-  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
   margin-bottom: 18px;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.form-group label { display: block; margin-bottom: 0.25rem; font-weight: 600; font-size: 0.95rem; }
+.form-group input, .form-group select, .form-group button { width: 100%; box-sizing: border-box; padding: 0.5rem 0.75rem; }
+.form-group button { height: 40px; }
+
+@media (max-width: 1100px) {
+  .form-grid { max-width: 100%; padding: 0 0.5rem; }
+}
+
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .list-toolbar {
@@ -103,3 +130,18 @@ button[ng-reflect-ng-class].export-btn:hover, .list-toolbar button:hover {
   overflow-x: auto;
   margin-top: 0.75rem;
 }
+
+/* Match bill search page styles for consistent layout */
+.form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+label { font-weight: 600; color: #0f3b66; }
+input, select, button { border-radius: 10px; border: 1px solid #dce6f5; padding: 0.7rem 0.8rem; font-size: 0.95rem; }
+input:focus, select:focus { outline: none; border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12); }
+.list-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.search-box.bill-search-box { min-width:300px; border:1px solid #dce6f5; border-radius:999px; padding:0.6rem 0.9rem; background:#fff; }
+.search-box.bill-search-box input { border:0; outline:none; width:100%; font-size:0.95rem; }
+.export-btn { background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%) !important; color:#fff !important; border:none !important; }
+.bill-grid-table { width:100%; border-collapse: collapse; background:#fff; border-radius:6px; overflow:hidden; }
+.bill-grid-table th, .bill-grid-table td { border:1px solid #ddd; padding:6px 8px; text-align:left; }
+.bill-grid-table thead th { background:#eef6ff; color:#0b5394; text-transform:uppercase; font-weight:700; }
+.bill-grid-table tfoot td { background:#f8fafc; font-weight:700; }
