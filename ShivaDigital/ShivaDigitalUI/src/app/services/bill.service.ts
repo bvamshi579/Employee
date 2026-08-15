@@ -38,6 +38,8 @@ export interface Bill {
   BillType?: string;
   Lines?: BillLine[];
   AdvancePayments?: BillPayment[];
+  CorrectionUserID?: number;
+  CorrectionUserName?: string;
 }
 
 export interface SheetOption {
@@ -50,6 +52,16 @@ export interface SheetOption {
 export interface FileSizeOption {
   ID?: number;
   FileSize?: string;
+}
+
+export interface CorrectionUser {
+  CorrectionUserID?: number;
+  Name?: string;
+}
+
+export interface BillSheetSummary {
+  BillID?: number;
+  Lines?: BillLine[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -80,6 +92,18 @@ export class BillService {
 
   getSheets(sheetType: string): Observable<SheetOption[]> {
     return this.http.get<SheetOption[]>(`${this.apiUrl}/sheets/${sheetType}`);
+  }
+
+  getCorrectionUsers(): Observable<CorrectionUser[]> {
+    return this.http.get<CorrectionUser[]>(`${this.apiUrl}/correction-users`);
+  }
+
+  searchBillsByCorrectionUser(fromDate?: string, toDate?: string, correctionUserId?: number): Observable<BillSheetSummary[]> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    if (correctionUserId != null) params = params.set('correctionUserId', String(correctionUserId));
+    return this.http.get<BillSheetSummary[]>(`${this.apiUrl}/search/by-correction-user`, { params });
   }
 
   getFileSizes(): Observable<FileSizeOption[]> {

@@ -1,0 +1,105 @@
+.card {
+  padding: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 220px;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.list-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.search-box.bill-search-box {
+  min-width: 300px;
+  border: 1px solid #dce6f5;
+  border-radius: 999px;
+  padding: 0.6rem 0.9rem;
+  background: #fff;
+}
+
+.search-box.bill-search-box input {
+  border: 0;
+  outline: none;
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+.bill-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.bill-grid-table th,
+.bill-grid-table td {
+  border: 1px solid #ddd;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.bill-grid-table thead th {
+  background: #eef6ff;
+  color: #0b5394;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.bill-grid-table tfoot td {
+  background: #f8fafc;
+  font-weight: 700;
+}
+
+.field-error {
+  color: #b00020;
+  margin-top: 4px;
+}
+
+.summary {
+  color: #47607a;
+  font-weight: 600;
+}
+
+button[ng-reflect-ng-class].export-btn, .list-toolbar button {
+  color: #fff;
+  border: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button[ng-reflect-ng-class].export-btn:hover, .list-toolbar button:hover {
+  filter: brightness(0.95);
+}
+
+.export-btn {
+  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%) !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+.form-group input[type="date"], .form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5eef8;
+  background: #fff;
+}
+
+.empty-state {
+  padding: 18px;
+  color: #6b7280;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}

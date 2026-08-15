@@ -40,7 +40,9 @@ export class BillComponent implements OnInit {
   showDueOnly = false;
   sheetOptions: SheetOption[] = [];
   fileSizes: FileSizeOption[] = [];
+  correctionUsers: { CorrectionUserID?: number; Name?: string }[] = [];
   selectedCustomerId: number | null = null;
+  selectedCorrectionUserId: number | null = null;
   selectedCustomerName = '';
   selectedCustomerMobile = '';
   pendingCustomerId: number | undefined;
@@ -67,6 +69,7 @@ export class BillComponent implements OnInit {
     fileSize?: string;
     bookingTime?: string;
     deliveryTime?: string;
+    correctionUser?: string;
     lines?: string;
   } = {};
   lines: BillLine[] = [];
@@ -104,6 +107,7 @@ export class BillComponent implements OnInit {
     });
 
     this.loadCustomers();
+    this.loadCorrectionUsers();
     this.loadSheets();
     this.loadFileSizes();
     this.resetLines();
@@ -147,6 +151,13 @@ export class BillComponent implements OnInit {
         }
       },
       error: () => this.message = 'Unable to load customers.'
+    });
+  }
+
+  loadCorrectionUsers() {
+    this.billService.getCorrectionUsers().subscribe({
+      next: (data) => this.correctionUsers = data || [],
+      error: () => this.message = 'Unable to load correction users.'
     });
   }
 
@@ -642,6 +653,8 @@ export class BillComponent implements OnInit {
       BillType: this.billType,
       Lines: this.lines.filter((line) => (line.Quantity ?? 0) > 0),
       AdvancePayments: this.payments
+      ,
+      CorrectionUserID: this.selectedCorrectionUserId ?? undefined
     };
 
     if (this.currentBillId) {
@@ -683,6 +696,9 @@ export class BillComponent implements OnInit {
     if (!this.selectedCustomerId) {
       this.fieldErrors.customer = 'Please select a customer.';
     }
+    if (!this.selectedCorrectionUserId) {
+      this.fieldErrors.correctionUser = 'Please select a correction user.';
+    }
     if (!this.files || !this.files.trim()) {
       this.fieldErrors.files = 'Files is required.';
     }
@@ -698,7 +714,7 @@ export class BillComponent implements OnInit {
     }
 
     if (Object.keys(this.fieldErrors).length) {
-      this.message = this.fieldErrors.customer || this.fieldErrors.files || this.fieldErrors.fileSize || this.fieldErrors.bookingTime || this.fieldErrors.lines || 'Please correct the highlighted fields.';
+      this.message = this.fieldErrors.customer || this.fieldErrors.correctionUser || this.fieldErrors.files || this.fieldErrors.fileSize || this.fieldErrors.bookingTime || this.fieldErrors.lines || 'Please correct the highlighted fields.';
       return false;
     }
 
@@ -750,6 +766,7 @@ export class BillComponent implements OnInit {
     this.discount = bill.Discount || 0;
     this.billType = bill.BillType || 'Lab';
     this.payments = bill.AdvancePayments || [];
+    this.selectedCorrectionUserId = bill.CorrectionUserID ?? null;
     this.computePaymentTotals();
     // map lines to sheet options if available, otherwise use provided lines
     const mapLines = (sheetOpts: SheetOption[]) => {

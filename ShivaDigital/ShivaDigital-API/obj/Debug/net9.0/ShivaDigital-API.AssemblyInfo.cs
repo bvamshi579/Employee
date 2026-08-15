@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ShivaDigital-API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b621dd92f1db48b70b87eeb8820a93ac892c68ac")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+de37bc58abca5052309ba7b63d5f17bd663e1497")]
 [assembly: System.Reflection.AssemblyProductAttribute("ShivaDigital-API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ShivaDigital-API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

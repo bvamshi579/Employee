@@ -225,6 +225,15 @@
       </div>
 
       <div class="form-group">
+        <label>Correction User</label>
+        <select [(ngModel)]="selectedCorrectionUserId">
+          <option [ngValue]="''">(none)</option>
+          <option *ngFor="let u of correctionUsers" [ngValue]="u.CorrectionUserID">{{ u.Name }}</option>
+        </select>
+        <div class="field-error" *ngIf="fieldErrors.correctionUser">{{ fieldErrors.correctionUser }}</div>
+      </div>
+
+      <div class="form-group">
         <label>Booking Time</label>
         <input type="datetime-local" [(ngModel)]="bookingTime" disabled />
         <div class="field-error" *ngIf="fieldErrors.bookingTime">{{ fieldErrors.bookingTime }}</div>

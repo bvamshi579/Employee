@@ -47,6 +47,22 @@ public class BillsController : ControllerBase
         return Ok(sheets);
     }
 
+    [HttpGet("correction-users")]
+    public async Task<ActionResult<IEnumerable<CorrectionUser>>> GetCorrectionUsers()
+    {
+        var users = await _repository.GetCorrectionUsersAsync();
+        return Ok(users);
+    }
+
+    [HttpGet("search/by-correction-user")]
+    public async Task<ActionResult<IEnumerable<BillSheetSummary>>> SearchByCorrectionUser([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate, [FromQuery] int correctionUserId)
+    {
+        var effectiveFrom = fromDate;
+        var effectiveTo = toDate;
+        var rows = await _repository.SearchByCorrectionUserAsync(effectiveFrom, effectiveTo, correctionUserId);
+        return Ok(rows);
+    }
+
     [HttpGet("filesizes")]
     public async Task<ActionResult<IEnumerable<FileSizeOption>>> GetFileSizes()
     {

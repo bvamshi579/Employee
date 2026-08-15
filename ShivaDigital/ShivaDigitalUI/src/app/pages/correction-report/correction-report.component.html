@@ -1,0 +1,67 @@
+<div class="card">
+  <h3>Correction User Report</h3>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>From date</label>
+      <input type="date" [(ngModel)]="fromDate" />
+    </div>
+    <div class="form-group">
+      <label>To date</label>
+      <input type="date" [(ngModel)]="toDate" />
+    </div>
+    <div class="form-group">
+      <label>User</label>
+      <select [(ngModel)]="selectedCorrectionUserId">
+        <option [ngValue]="''">Select user</option>
+        <option *ngFor="let u of correctionUsers" [ngValue]="u.CorrectionUserID">{{ u.Name }}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>&nbsp;</label>
+      <button type="button" (click)="search()">Search</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading">Loading...</div>
+  <div *ngIf="message" class="field-error">{{ message }}</div>
+
+  <div *ngIf="rows.length">
+    <div class="list-toolbar bill-list-toolbar">
+      <div class="search-box bill-search-box">
+        <span>🔎</span>
+        <input type="text" [(ngModel)]="searchGridFilter" placeholder="Filter by bill id or sheet name" />
+      </div>
+      <div class="summary">{{ filteredRows.length }} bill(s)</div>
+      <button type="button" class="export-btn" (click)="export()">Export to Excel</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="bill-list no-print bill-grid-table" *ngIf="visibleSheets.length; else noColumns">
+      <thead>
+        <tr>
+          <th>Bill ID</th>
+          <th *ngFor="let s of visibleSheets">{{ s.Name }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of filteredRows">
+          <td>{{ r.BillID }}</td>
+          <td *ngFor="let s of visibleSheets">
+            {{ getQuantity(r, s.SheetTypeID) }}
+          </td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td><strong>Totals</strong></td>
+          <td *ngFor="let s of visibleSheets">{{ totals[s.SheetTypeID ?? -1] || 0 }}</td>
+        </tr>
+      </tfoot>
+      </table>
+    </div>
+
+    <ng-template #noColumns>
+      <div class="empty-state">No sheets with quantities found for the selected user/date range.</div>
+    </ng-template>
+  </div>
+</div>

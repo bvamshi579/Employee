@@ -57,4 +57,10 @@ public class Bill
 
     [JsonPropertyName("AdvancePayments")]
     public List<BillPayment>? AdvancePayments { get; set; }
+
+    [JsonPropertyName("CorrectionUserID")]
+    public int? CorrectionUserID { get; set; }
+
+    [JsonPropertyName("CorrectionUserName")]
+    public string? CorrectionUserName { get; set; }
 }

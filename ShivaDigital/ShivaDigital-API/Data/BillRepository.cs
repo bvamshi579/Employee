@@ -15,6 +15,68 @@ public class BillRepository
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
     }
 
+    public async Task<List<CorrectionUser>> GetCorrectionUsersAsync()
+    {
+        var result = new List<CorrectionUser>();
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand("SELECT CorrectionUserID, [Name] FROM dbo.vvtblCorrectionUsers ORDER BY [Name]", connection);
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            result.Add(new CorrectionUser
+            {
+                CorrectionUserID = reader.IsDBNull(reader.GetOrdinal("CorrectionUserID")) ? null : reader.GetInt32(reader.GetOrdinal("CorrectionUserID")),
+                Name = reader.IsDBNull(reader.GetOrdinal("Name")) ? null : reader.GetString(reader.GetOrdinal("Name"))
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<List<BillSheetSummary>> SearchByCorrectionUserAsync(DateTime? fromDate, DateTime? toDate, int correctionUserId)
+    {
+        var result = new List<BillSheetSummary>();
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(@"
+            SELECT b.BillID, d.SheetTypeID, s.Name AS SheetName, d.Quanity
+            FROM dbo.vvtblBill b
+            INNER JOIN dbo.vvtblBillDetails d ON d.BillID = b.BillID
+            LEFT JOIN dbo.vvtblSheets s ON s.ID = d.SheetTypeID
+            WHERE (@FromDate IS NULL OR CAST(b.BillDate AS date) >= CAST(@FromDate AS date))
+              AND (@ToDate IS NULL OR CAST(b.BillDate AS date) <= CAST(@ToDate AS date))
+              AND b.CorrectionUserID = @CorrectionUserID
+              AND d.Quanity > 0
+            ORDER BY b.BillID DESC", connection);
+
+        command.Parameters.Add("@FromDate", SqlDbType.Date).Value = (object?)(fromDate ?? (object)DBNull.Value) ?? DBNull.Value;
+        command.Parameters.Add("@ToDate", SqlDbType.Date).Value = (object?)(toDate ?? (object)DBNull.Value) ?? DBNull.Value;
+        command.Parameters.Add("@CorrectionUserID", SqlDbType.Int).Value = correctionUserId;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        var map = new Dictionary<int, BillSheetSummary>();
+        while (await reader.ReadAsync())
+        {
+            var billId = reader.IsDBNull(reader.GetOrdinal("BillID")) ? 0 : reader.GetInt32(reader.GetOrdinal("BillID"));
+            if (!map.TryGetValue(billId, out var summary))
+            {
+                summary = new BillSheetSummary { BillID = billId, Lines = new List<BillLine>() };
+                map[billId] = summary;
+            }
+
+            var sheetTypeId = reader.IsDBNull(reader.GetOrdinal("SheetTypeID")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("SheetTypeID"));
+            var sheetName = reader.IsDBNull(reader.GetOrdinal("SheetName")) ? null : reader.GetString(reader.GetOrdinal("SheetName"));
+            var qty = reader.IsDBNull(reader.GetOrdinal("Quanity")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("Quanity"));
+
+            summary.Lines!.Add(new BillLine { SheetTypeID = sheetTypeId, SheetName = sheetName, Quantity = qty });
+        }
+
+        return map.Values.ToList();
+    }
+
     public async Task<List<Bill>> GetAllAsync()
     {
         var result = new List<Bill>();
@@ -22,9 +84,10 @@ public class BillRepository
         await connection.OpenAsync();
 
         await using var command = new SqlCommand(@"
-            SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType
+            SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType, b.CorrectionUserID, u.Name AS CorrectionUserName
             FROM dbo.vvtblBill b
             LEFT JOIN dbo.vvtblCustomers c ON c.CustomerID = b.CustomerID
+            LEFT JOIN dbo.vvtblCorrectionUsers u ON u.CorrectionUserID = b.CorrectionUserID
             ORDER BY b.BillID", connection);
         await using var reader = await command.ExecuteReaderAsync();
 
@@ -45,7 +108,9 @@ public class BillRepository
                 Advance = reader.IsDBNull(reader.GetOrdinal("Advance")) ? null : reader.GetDouble(reader.GetOrdinal("Advance")),
                 BalancePaid = reader.IsDBNull(reader.GetOrdinal("BalancePaid")) ? null : reader.GetInt32(reader.GetOrdinal("BalancePaid")),
                 Discount = reader.IsDBNull(reader.GetOrdinal("Discount")) ? null : reader.GetInt32(reader.GetOrdinal("Discount")),
-                BillType = reader.IsDBNull(reader.GetOrdinal("BillType")) ? null : reader.GetString(reader.GetOrdinal("BillType"))
+                BillType = reader.IsDBNull(reader.GetOrdinal("BillType")) ? null : reader.GetString(reader.GetOrdinal("BillType")),
+                CorrectionUserID = reader.IsDBNull(reader.GetOrdinal("CorrectionUserID")) ? null : reader.GetInt32(reader.GetOrdinal("CorrectionUserID")),
+                CorrectionUserName = reader.IsDBNull(reader.GetOrdinal("CorrectionUserName")) ? null : reader.GetString(reader.GetOrdinal("CorrectionUserName"))
             });
         }
 
@@ -58,13 +123,14 @@ public class BillRepository
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        await using var command = new SqlCommand(@"
-            SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType
-            FROM dbo.vvtblBill b
-            LEFT JOIN dbo.vvtblCustomers c ON c.CustomerID = b.CustomerID
-            WHERE (@FromDate IS NULL OR CAST(b.BillDate AS date) >= CAST(@FromDate AS date))
-              AND (@ToDate IS NULL OR CAST(b.BillDate AS date) <= CAST(@ToDate AS date))
-            ORDER BY b.BillID DESC", connection);
+                await using var command = new SqlCommand(@"
+                        SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType, b.CorrectionUserID, u.Name AS CorrectionUserName
+                        FROM dbo.vvtblBill b
+                        LEFT JOIN dbo.vvtblCustomers c ON c.CustomerID = b.CustomerID
+                        LEFT JOIN dbo.vvtblCorrectionUsers u ON u.CorrectionUserID = b.CorrectionUserID
+                        WHERE (@FromDate IS NULL OR CAST(b.BillDate AS date) >= CAST(@FromDate AS date))
+                            AND (@ToDate IS NULL OR CAST(b.BillDate AS date) <= CAST(@ToDate AS date))
+                        ORDER BY b.BillID DESC", connection);
 
         command.Parameters.Add("@FromDate", SqlDbType.Date).Value = (object?)(fromDate ?? (object)DBNull.Value) ?? DBNull.Value;
         command.Parameters.Add("@ToDate", SqlDbType.Date).Value = (object?)(toDate ?? (object)DBNull.Value) ?? DBNull.Value;
@@ -87,7 +153,9 @@ public class BillRepository
                 Advance = reader.IsDBNull(reader.GetOrdinal("Advance")) ? null : reader.GetDouble(reader.GetOrdinal("Advance")),
                 BalancePaid = reader.IsDBNull(reader.GetOrdinal("BalancePaid")) ? null : reader.GetInt32(reader.GetOrdinal("BalancePaid")),
                 Discount = reader.IsDBNull(reader.GetOrdinal("Discount")) ? null : reader.GetInt32(reader.GetOrdinal("Discount")),
-                BillType = reader.IsDBNull(reader.GetOrdinal("BillType")) ? null : reader.GetString(reader.GetOrdinal("BillType"))
+                BillType = reader.IsDBNull(reader.GetOrdinal("BillType")) ? null : reader.GetString(reader.GetOrdinal("BillType")),
+                CorrectionUserID = reader.IsDBNull(reader.GetOrdinal("CorrectionUserID")) ? null : reader.GetInt32(reader.GetOrdinal("CorrectionUserID")),
+                CorrectionUserName = reader.IsDBNull(reader.GetOrdinal("CorrectionUserName")) ? null : reader.GetString(reader.GetOrdinal("CorrectionUserName"))
             });
         }
 
@@ -100,14 +168,15 @@ public class BillRepository
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        await using var command = new SqlCommand(@"
-            SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, p.PaymentDate, p.AmountPaid AS PaymentAmount, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType
-            FROM dbo.vvtblBill b
-            LEFT JOIN dbo.vvtblCustomers c ON c.CustomerID = b.CustomerID
-            INNER JOIN dbo.vvtblBillPayment p ON p.BillID = b.BillID
-            WHERE (@FromDate IS NULL OR CAST(p.PaymentDate AS date) >= CAST(@FromDate AS date))
-              AND (@ToDate IS NULL OR CAST(p.PaymentDate AS date) <= CAST(@ToDate AS date))
-            ORDER BY p.PaymentDate DESC", connection);
+                await using var command = new SqlCommand(@"
+                        SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, p.PaymentDate, p.AmountPaid AS PaymentAmount, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType, b.CorrectionUserID, u.Name AS CorrectionUserName
+                        FROM dbo.vvtblBill b
+                        LEFT JOIN dbo.vvtblCustomers c ON c.CustomerID = b.CustomerID
+                        LEFT JOIN dbo.vvtblCorrectionUsers u ON u.CorrectionUserID = b.CorrectionUserID
+                        INNER JOIN dbo.vvtblBillPayment p ON p.BillID = b.BillID
+                        WHERE (@FromDate IS NULL OR CAST(p.PaymentDate AS date) >= CAST(@FromDate AS date))
+                            AND (@ToDate IS NULL OR CAST(p.PaymentDate AS date) <= CAST(@ToDate AS date))
+                        ORDER BY p.PaymentDate DESC", connection);
 
         command.Parameters.Add("@FromDate", SqlDbType.Date).Value = (object?)(fromDate ?? (object)DBNull.Value) ?? DBNull.Value;
         command.Parameters.Add("@ToDate", SqlDbType.Date).Value = (object?)(toDate ?? (object)DBNull.Value) ?? DBNull.Value;
@@ -132,7 +201,9 @@ public class BillRepository
                 Advance = reader.IsDBNull(reader.GetOrdinal("Advance")) ? null : reader.GetDouble(reader.GetOrdinal("Advance")),
                 BalancePaid = reader.IsDBNull(reader.GetOrdinal("BalancePaid")) ? null : reader.GetInt32(reader.GetOrdinal("BalancePaid")),
                 Discount = reader.IsDBNull(reader.GetOrdinal("Discount")) ? null : reader.GetInt32(reader.GetOrdinal("Discount")),
-                BillType = reader.IsDBNull(reader.GetOrdinal("BillType")) ? null : reader.GetString(reader.GetOrdinal("BillType"))
+                BillType = reader.IsDBNull(reader.GetOrdinal("BillType")) ? null : reader.GetString(reader.GetOrdinal("BillType")),
+                CorrectionUserID = reader.IsDBNull(reader.GetOrdinal("CorrectionUserID")) ? null : reader.GetInt32(reader.GetOrdinal("CorrectionUserID")),
+                CorrectionUserName = reader.IsDBNull(reader.GetOrdinal("CorrectionUserName")) ? null : reader.GetString(reader.GetOrdinal("CorrectionUserName"))
             });
         }
 
@@ -203,8 +274,8 @@ public class BillRepository
         UpdateComputedPaymentTotals(model);
 
         await using var command = new SqlCommand(@"
-            INSERT INTO dbo.vvtblBill (CustomerID, BillDate, Files, FileSize, BookingTime, DeliveryTime, Total, Advance, BalancePaid, Discount, BillType)
-            VALUES (@CustomerID, @BillDate, @Files, @FileSize, @BookingTime, @DeliveryTime, @Total, @Advance, @BalancePaid, @Discount, @BillType)
+            INSERT INTO dbo.vvtblBill (CustomerID, BillDate, Files, FileSize, BookingTime, DeliveryTime, Total, Advance, BalancePaid, Discount, BillType, CorrectionUserID)
+            VALUES (@CustomerID, @BillDate, @Files, @FileSize, @BookingTime, @DeliveryTime, @Total, @Advance, @BalancePaid, @Discount, @BillType, @CorrectionUserID)
             select cast(SCOPE_IDENTITY() as int)
             ", connection);
 
@@ -219,6 +290,7 @@ public class BillRepository
         command.Parameters.Add("@BalancePaid", SqlDbType.Int).Value = (model.BalancePaid ?? 0);
         command.Parameters.Add("@Discount", SqlDbType.Int).Value = (model.Discount ?? 0);
         command.Parameters.Add("@BillType", SqlDbType.VarChar, 20).Value = (object?)(model.BillType ?? "Standard") ?? DBNull.Value;
+        command.Parameters.Add("@CorrectionUserID", SqlDbType.Int).Value = (model.CorrectionUserID ?? (object)DBNull.Value) ?? DBNull.Value;
 
         var idObj = await command.ExecuteScalarAsync();
         if (idObj is not null && idObj != DBNull.Value)
@@ -288,7 +360,8 @@ public class BillRepository
                 Advance = @Advance,
                 BalancePaid = @BalancePaid,
                 Discount = @Discount,
-                BillType = @BillType
+                    BillType = @BillType,
+                    CorrectionUserID = @CorrectionUserID
             WHERE BillID = @BillID", connection);
 
         command.Parameters.Add("@BillID", SqlDbType.Int).Value = model.BillID ?? 0;
@@ -303,6 +376,7 @@ public class BillRepository
         command.Parameters.Add("@BalancePaid", SqlDbType.Int).Value = (model.BalancePaid ?? 0);
         command.Parameters.Add("@Discount", SqlDbType.Int).Value = (model.Discount ?? 0);
         command.Parameters.Add("@BillType", SqlDbType.VarChar, 20).Value = (object?)(model.BillType ?? "Standard") ?? DBNull.Value;
+        command.Parameters.Add("@CorrectionUserID", SqlDbType.Int).Value = (model.CorrectionUserID ?? (object)DBNull.Value) ?? DBNull.Value;
 
         await command.ExecuteNonQueryAsync();
 
@@ -384,9 +458,10 @@ public class BillRepository
         Bill? bill = null;
 
         await using var command = new SqlCommand(@"
-            SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType
+            SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType, b.CorrectionUserID, u.Name AS CorrectionUserName
             FROM dbo.vvtblBill b
             LEFT JOIN dbo.vvtblCustomers c ON c.CustomerID = b.CustomerID
+            LEFT JOIN dbo.vvtblCorrectionUsers u ON u.CorrectionUserID = b.CorrectionUserID
             WHERE b.BillID = @BillID", connection);
         command.Parameters.Add("@BillID", SqlDbType.Int).Value = id;
 
@@ -410,6 +485,9 @@ public class BillRepository
                     BalancePaid = reader.IsDBNull(reader.GetOrdinal("BalancePaid")) ? null : reader.GetInt32(reader.GetOrdinal("BalancePaid")),
                     Discount = reader.IsDBNull(reader.GetOrdinal("Discount")) ? null : reader.GetInt32(reader.GetOrdinal("Discount")),
                     BillType = reader.IsDBNull(reader.GetOrdinal("BillType")) ? null : reader.GetString(reader.GetOrdinal("BillType"))
+                    ,
+                    CorrectionUserID = reader.IsDBNull(reader.GetOrdinal("CorrectionUserID")) ? null : reader.GetInt32(reader.GetOrdinal("CorrectionUserID")),
+                    CorrectionUserName = reader.IsDBNull(reader.GetOrdinal("CorrectionUserName")) ? null : reader.GetString(reader.GetOrdinal("CorrectionUserName"))
                 };
             }
         }
