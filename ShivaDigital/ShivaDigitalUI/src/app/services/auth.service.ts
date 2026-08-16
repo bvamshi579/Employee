@@ -19,6 +19,7 @@ export class AuthService {
   private isLoggedIn = false;
   private apiUrl = '';
   role?: number | null = null;
+  userName?: string | null = null;
 
   constructor(private router: Router, private http: HttpClient, @Inject(API_BASE) private apiBase: string) {
     this.apiUrl = `${this.apiBase || ''}/auth/login`;
@@ -28,6 +29,8 @@ export class AuthService {
       this.isLoggedIn = stored === 'true';
       const storedRole = localStorage.getItem('auth.role');
       this.role = storedRole ? Number(storedRole) : null;
+      const storedUser = localStorage.getItem('auth.user');
+      this.userName = storedUser ?? null;
     } catch {
       this.isLoggedIn = false;
     }
@@ -38,8 +41,10 @@ export class AuthService {
       map((response) => {
         this.isLoggedIn = response?.isValid === true;
         this.role = response?.role ?? null;
+        this.userName = response?.userName ?? null;
         try { localStorage.setItem('auth.isLoggedIn', this.isLoggedIn ? 'true' : 'false'); } catch {}
         try { if (this.role != null) localStorage.setItem('auth.role', String(this.role)); else localStorage.removeItem('auth.role'); } catch {}
+        try { if (this.userName != null) localStorage.setItem('auth.user', this.userName); else localStorage.removeItem('auth.user'); } catch {}
         return this.isLoggedIn;
       }),
       catchError(() => {
@@ -53,8 +58,10 @@ export class AuthService {
   logout() {
     this.isLoggedIn = false;
     this.role = null;
+    this.userName = null;
     try { localStorage.removeItem('auth.isLoggedIn'); } catch {}
     try { localStorage.removeItem('auth.role'); } catch {}
+    try { localStorage.removeItem('auth.user'); } catch {}
     this.router.navigate(['/login']);
   }
 

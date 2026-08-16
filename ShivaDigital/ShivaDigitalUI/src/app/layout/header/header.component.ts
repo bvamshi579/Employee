@@ -17,6 +17,10 @@ export class HeaderComponent implements OnInit {
 
   constructor(private authService: AuthService, private router: Router) {}
 
+  get userName(): string | null | undefined {
+    return this.authService.userName;
+  }
+
   ngOnInit() {
     const checkLoginRoute = (url: string) => url.startsWith('/login');
     this.isLoginPage = checkLoginRoute(this.router.url);
