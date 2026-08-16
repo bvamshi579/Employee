@@ -625,7 +625,7 @@ input:focus, select:focus {
     margin: 0;
     padding: 0.6rem;
     width: 100%;
-    page-break-inside: avoid;
+    page-break-inside: auto;
   }
 
   /* Force two-column layout for printable meta/details to match previous rows */
@@ -659,7 +659,7 @@ input:focus, select:focus {
   }
 
   /* Avoid splitting table rows and important blocks across pages */
-  .print-table, .print-table tbody, .print-table tr, .printable-bill-inner { page-break-inside: avoid; }
+  .print-table, .print-table tbody, .print-table tr, .printable-bill-inner { page-break-inside: auto; }
 
   .sheet-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
