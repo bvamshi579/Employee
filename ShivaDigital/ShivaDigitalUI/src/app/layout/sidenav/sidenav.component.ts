@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-sidenav',
@@ -10,8 +11,12 @@ import { CommonModule } from '@angular/common';
   standalone: true
 })
 export class SidenavComponent {
-  navLinks: NavLink[] = NAV_LINKS;
+  navLinks: NavLink[] = [];
   expandedLinks = new Set<string>();
+  constructor(private authService: AuthService) {
+    // Filter nav links based on role requirements
+    this.navLinks = NAV_LINKS.filter(link => !link.requiresRole || this.authService.role === link.requiresRole);
+  }
 
   toggleCollapse(link: NavLink) {
     if (!link.label) return;
@@ -32,6 +37,7 @@ export interface NavLink {
   route?: string;
   icon?: string;
   children?: NavLink[];
+  requiresRole?: number;
 }
 
 export const NAV_LINKS: NavLink[] = [
@@ -45,7 +51,7 @@ export const NAV_LINKS: NavLink[] = [
   { label: 'Bill Search', route: '/bill-search', icon: 'search' },
   { label: 'Payment Search', route: '/payment-search', icon: 'payment' },
   { label: 'Correction Report', route: '/correction-report', icon: 'report' },
-  { label: 'Inventory Report', route: '/inventory', icon: 'report' },
+  { label: 'Inventory Report', route: '/inventory', icon: 'report', requiresRole: 1 },
   { label: 'Profile', route: '/settings/profile', icon: 'person' },
   { label: 'Security', route: '/settings/security', icon: 'security' }
 

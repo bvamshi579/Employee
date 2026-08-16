@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Customer, CustomerService } from '../../services/customer.service';
 import { Bill, BillLine, BillPayment, BillService, SheetOption, FileSizeOption } from '../../services/bill.service';
 import { ExportService } from '../../services/export.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-bill',
@@ -99,7 +100,12 @@ export class BillComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
     private exportService: ExportService
+    , private authService: AuthService
   ) {}
+
+  get showRecentBills(): boolean {
+    return this.authService.role === 1;
+  }
 
   ngOnInit() {
     const routeMode = this.route.snapshot.data['mode'];

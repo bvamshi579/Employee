@@ -353,7 +353,7 @@
     </div>
   </div>
 
-  <div class="bill-list-panel no-print">
+  <div class="bill-list-panel no-print" *ngIf="showRecentBills">
     <h4>Recent Bills</h4>
     <div class="pagination" *ngIf="filteredBills.length > pageSize">
       <button type="button" (click)="prevPage()" [disabled]="page === 1">Prev</button>
