@@ -43,6 +43,23 @@ export class BillComponent implements OnInit {
   correctionUsers: { CorrectionUserID?: number; Name?: string }[] = [];
   selectedCustomerId: number | null = null;
   selectedCorrectionUserId: number | null = null;
+  // Print context: whether to print for a customer or for counter
+  printFor: 'Customer' | 'Counter' = 'Customer';
+
+  get printableTargetName(): string {
+    if (this.printFor === 'Counter') {
+      const nameFromSelected = this.selectedSearchBill?.CorrectionUserName;
+      const nameFromDropdown = this.correctionUsers.find(u => u.CorrectionUserID === this.selectedCorrectionUserId)?.Name;
+      return (nameFromSelected || nameFromDropdown) || '—';
+    }
+    return this.printableCustomerName || '—';
+  }
+
+  get printableCounterName(): string {
+    const nameFromSelected = this.selectedSearchBill?.CorrectionUserName;
+    const nameFromDropdown = this.correctionUsers.find(u => u.CorrectionUserID === this.selectedCorrectionUserId)?.Name;
+    return (nameFromSelected || nameFromDropdown) || '';
+  }
   selectedCustomerName = '';
   selectedCustomerMobile = '';
   pendingCustomerId: number | undefined;
@@ -575,6 +592,21 @@ export class BillComponent implements OnInit {
   }
 
   printBill() {
+    // Validate that a print target (Customer or Counter) is selected and available
+    if (this.printFor === 'Customer') {
+      const hasCustomer = this.selectedCustomerId != null || (this.selectedSearchBill?.CustomerID != null);
+      if (!hasCustomer) {
+        this.showToast('Select a customer before printing.', 'error');
+        return;
+      }
+    } else {
+      const hasCounter = this.selectedCorrectionUserId != null || (this.selectedSearchBill?.CorrectionUserID != null);
+      if (!hasCounter) {
+        this.showToast('Select a counter (correction user) before printing.', 'error');
+        return;
+      }
+    }
+
     window.print();
   }
 

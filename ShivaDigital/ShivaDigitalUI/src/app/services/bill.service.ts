@@ -135,13 +135,25 @@ export class BillService {
     return this.http.get<SheetInventory[]>(`${this.apiUrl}/inventory/${sheetType}`);
   }
 
-  addInventory(sheetTypeId: number, quantity: number, fileSize?: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/inventory`, { sheetTypeID: sheetTypeId, quantity, fileSize });
+  getInventoryByFileSize(fileSize: number): Observable<SheetInventory[]> {
+    return this.http.get<SheetInventory[]>(`${this.apiUrl}/inventory/filesize/${fileSize}`);
   }
 
-  getInventoryTransactions(sheetTypeId?: number, fromDate?: string, toDate?: string, txType?: string, page?: number, pageSize?: number): Observable<SheetInventoryTx[]> {
+  getInventoryAllByFileSize(): Observable<SheetInventory[]> {
+    return this.http.get<SheetInventory[]>(`${this.apiUrl}/inventory/filesizes/summary`);
+  }
+
+  addInventory(sheetTypeId: number | null | undefined, quantity: number, fileSize?: number): Observable<void> {
+    const payload: any = { quantity };
+    if (sheetTypeId != null) payload.sheetTypeID = sheetTypeId;
+    if (fileSize != null) payload.fileSize = fileSize;
+    return this.http.post<void>(`${this.apiUrl}/inventory`, payload);
+  }
+
+  getInventoryTransactions(sheetTypeId?: number, fileSize?: number, fromDate?: string, toDate?: string, txType?: string, page?: number, pageSize?: number): Observable<SheetInventoryTx[]> {
     let params = new HttpParams();
-    if (sheetTypeId) params = params.set('sheetTypeId', String(sheetTypeId));
+    if (sheetTypeId != null) params = params.set('sheetTypeId', String(sheetTypeId));
+    if (fileSize != null) params = params.set('fileSize', String(fileSize));
     if (fromDate) params = params.set('fromDate', fromDate);
     if (toDate) params = params.set('toDate', toDate);
     if (txType) params = params.set('txType', txType);
@@ -150,8 +162,15 @@ export class BillService {
     return this.http.get<SheetInventoryTx[]>(`${this.apiUrl}/inventory/transactions`, { params });
   }
 
-  addInventoryTransaction(req: { sheetTypeID: number; txType: string; quantity: number; sourceType?: string; sourceRef?: string; performedBy?: string; comment?: string; fileSize?: number }): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/inventory/transactions`, req);
+  addInventoryTransaction(req: { sheetTypeID?: number | null; txType: string; quantity: number; sourceType?: string; sourceRef?: string; performedBy?: string; comment?: string; fileSize?: number }): Observable<void> {
+    const payload: any = { txType: req.txType, quantity: req.quantity };
+    if (req.sheetTypeID != null) payload.sheetTypeID = req.sheetTypeID;
+    if (req.sourceType) payload.sourceType = req.sourceType;
+    if (req.sourceRef) payload.sourceRef = req.sourceRef;
+    if (req.performedBy) payload.performedBy = req.performedBy;
+    if (req.comment) payload.comment = req.comment;
+    if (req.fileSize != null) payload.fileSize = req.fileSize;
+    return this.http.post<void>(`${this.apiUrl}/inventory/transactions`, payload);
   }
 
   createBill(bill: Bill): Observable<Bill> {

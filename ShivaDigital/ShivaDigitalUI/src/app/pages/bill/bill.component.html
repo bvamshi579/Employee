@@ -87,7 +87,13 @@
       <div class="detail-header no-print">
         <h4>Bill Details & Payments for Bill ID: {{ selectedSearchBill.BillID }}</h4>
         <div class="detail-actions">
-          <button type="button" class="cancel-button" (click)="printBill()">Print Bill</button>
+            <label class="print-for">Print for
+              <select [(ngModel)]="printFor">
+                <option value="Customer">Customer</option>
+                <option value="Counter">Counter</option>
+              </select>
+            </label>
+            <button type="button" class="cancel-button" (click)="printBill()">Print Bill</button>
           <button type="button" class="cancel-button" (click)="cancelSearchBillSelection()">Cancel</button>
         </div>
       </div>
@@ -140,6 +146,7 @@
   <div class="printable-bill" *ngIf="isSearchOnlyMode && selectedSearchBill">
     <div class="printable-bill-inner">
       <div class="print-logo"><img src="/assets/Logo.jpeg" alt="Logo" onerror="this.onerror=null;this.src='/assets/logo.svg'" /></div>
+      <br />
       <div class="print-meta-grid">
         <div><strong>Bill ID:</strong> {{ printableBillId }}</div>
         <div><strong>Customer:</strong> {{ printableCustomerName }}</div>
@@ -153,7 +160,10 @@
         <div><strong>Balance Due:</strong> {{ printableDue | number:'1.0-0' }}</div>
         <div><strong>Advance:</strong> {{ printableAdvance | number:'1.0-0' }}</div>
         <div><strong>Mobile:</strong> {{ printableMobileNumber }}</div>
+        <div *ngIf="printFor === 'Counter' && printableCounterName"><strong>Correction:</strong> {{ printableCounterName }}</div>
+        
       </div>
+      <br />
       <table class="print-table">
         <thead>
           <tr>
@@ -278,6 +288,12 @@
     </div>
 
     <div class="actions">
+      <label class="print-for">Print for
+        <select [(ngModel)]="printFor">
+          <option value="Customer">Customer</option>
+          <option value="Counter">Counter</option>
+        </select>
+      </label>
       <button type="button" class="print-btn" (click)="printBill()">Print Bill</button>
       <button type="button" (click)="saveBill()">Save Bill</button>
     </div>
@@ -303,6 +319,8 @@
         <div><strong>Balance Due:</strong> {{ printableDue | number:'1.0-0' }}</div>
         <div><strong>Advance:</strong> {{ printableAdvance | number:'1.0-0' }}</div>
         <div><strong>Mobile:</strong> {{ printableMobileNumber }}</div>
+        <div *ngIf="printFor === 'Counter' && printableCounterName"><strong>Correction:</strong> {{ printableCounterName }}</div>
+        
       </div>
       <br/>
       <table class="print-table">
