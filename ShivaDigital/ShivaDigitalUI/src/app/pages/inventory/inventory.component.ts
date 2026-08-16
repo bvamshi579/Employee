@@ -142,7 +142,10 @@ export class InventoryComponent implements OnInit {
   loadTransactions() {
     const sheetId = this.selectedSheetId ?? undefined;
     const fSize = this.selectedFileSize ?? undefined;
-    this.billService.getInventoryTransactions(sheetId, fSize, this.fromDate || undefined, this.toDate || undefined, this.txFilter === 'ALL' ? undefined : this.txFilter).subscribe({
+    // Ensure we send date-only values (YYYY-MM-DD) so server-side filtering ignores time
+    const startDate = this.fromDate ? String(this.fromDate).split('T')[0] : undefined;
+    const endDate = this.toDate ? String(this.toDate).split('T')[0] : undefined;
+    this.billService.getInventoryTransactions(sheetId, fSize, startDate || undefined, endDate || undefined, this.txFilter === 'ALL' ? undefined : this.txFilter).subscribe({
       next: (rows) => this.transactions = rows || [],
       error: () => this.error = 'Unable to load inventory transactions.'
     });

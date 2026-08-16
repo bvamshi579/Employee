@@ -205,6 +205,66 @@ button:hover {
   overflow: auto;
 }
 
+/* Ledger grid styles: responsive auto-fit columns similar to the form grid */
+.ledger-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.ledger-header,
+.ledger-row {
+  display: grid;
+  /* Make Type and Quantity auto-fit while keeping other columns responsive */
+  grid-template-columns:
+    minmax(120px, 1fr)   /* Date */
+    minmax(140px, 1.5fr) /* Sheet */
+    minmax(100px, 1fr)   /* File Size */
+    auto                 /* Type (auto-fit) */
+    minmax(60px, auto)   /* Quantity (auto-fit, with minimum) */
+    minmax(120px, 1fr)   /* Source */
+    minmax(160px, 2fr)   /* Reference */
+    minmax(80px, 1fr)    /* Balance after */
+  ;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+}
+
+.ledger-header {
+  font-weight: 700;
+  background: #f5f8fe;
+  border: 1px solid #e4ebf3;
+  border-radius: 6px;
+}
+
+.ledger-row {
+  border: 1px solid #e4ebf3;
+  border-radius: 6px;
+  background: #fff;
+}
+
+/* Stronger visual indicators for IN/OUT rows in the ledger */
+.ledger-row.tx-in {
+  background: rgba(22, 163, 74, 0.06);
+  border-color: rgba(22, 163, 74, 0.18);
+}
+
+.ledger-row.tx-out {
+  background: rgba(220, 38, 38, 0.06);
+  border-color: rgba(220, 38, 38, 0.18);
+}
+
+.ledger-row .empty-state {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 960px) {
+  .ledger-header,
+  .ledger-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 960px) {
   .two-column-layout,
   .form-grid {

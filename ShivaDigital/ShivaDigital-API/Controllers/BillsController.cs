@@ -105,7 +105,10 @@ public class BillsController : ControllerBase
     [HttpGet("inventory/transactions")]
     public async Task<ActionResult<IEnumerable<SheetInventoryTx>>> GetInventoryTransactions([FromQuery] int? sheetTypeId, [FromQuery] int? fileSize, [FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate, [FromQuery] string? txType, [FromQuery] int page = 1, [FromQuery] int pageSize = 100)
     {
-        var rows = await _repository.GetInventoryTransactionsAsync(sheetTypeId, fileSize, fromDate, toDate, txType, page, pageSize);
+        // Interpret incoming dates as date-only values: include the full `toDate` day.
+        DateTime? effectiveFrom = fromDate?.Date;
+        DateTime? effectiveTo = toDate.HasValue ? toDate.Value.Date.AddDays(1).AddTicks(-1) : (DateTime?)null;
+        var rows = await _repository.GetInventoryTransactionsAsync(sheetTypeId, fileSize, effectiveFrom, effectiveTo, txType, page, pageSize);
         return Ok(rows);
     }
 

@@ -125,7 +125,7 @@
     <div *ngIf="message" class="success-message">{{ message }}</div>
     <div *ngIf="error" class="field-error">{{ error }}</div>
   </section>
-  <section class="card two-column-layout">
+  <section class="card transaction-ledger">
     <div class="ledger panel">
       <div class="panel-header">
         <h4>Transaction Ledger</h4>
@@ -141,35 +141,35 @@
       </div>
 
       <div class="table-wrap">
-        <table class="bill-grid-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Sheet</th>
-              <th>File Size</th>
-              <th>Type</th>
-              <th>Quantity</th>
-              <th>Source</th>
-              <th>Reference</th>
-              <th>Balance after</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of transactions" [class.tx-in]="item.TxType === 'IN'" [class.tx-out]="item.TxType === 'OUT'">
-              <td>{{ formatDate(item.TxDate) }}</td>
-              <td>{{ getSheetName(item.SheetTypeID) }}</td>
-                <td>{{ getFileSizeName(item.FileSize) }}</td>
-              <td>{{ item.TxType }}</td>
-              <td>{{ item.TxType === 'OUT' ? '-' : '+' }}{{ item.Quantity }}</td>
-              <td>{{ item.SourceType }}</td>
-              <td>{{ item.SourceRef || item.Comment || '—' }}</td>
-              <td>{{ item.BalanceAfter ?? 0 }}</td>
-            </tr>
-            <tr *ngIf="!transactions.length">
-              <td colspan="7" class="empty-state">No transactions found for the filters.</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="ledger-grid">
+          <div class="ledger-header">
+            <div>Date</div>
+            <div>Sheet</div>
+            <div>File Size</div>
+            <div>Type</div>
+            <div>Quantity</div>
+            <div>Source</div>
+            <div>Reference</div>
+            <div>Balance after</div>
+          </div>
+
+          <div *ngIf="transactions.length; else noTx">
+            <div class="ledger-row" *ngFor="let item of transactions" [ngClass]="{'tx-in': item.TxType === 'IN', 'tx-out': item.TxType === 'OUT'}">
+              <div>{{ formatDate(item.TxDate) }}</div>
+              <div>{{ getSheetName(item.SheetTypeID) }}</div>
+              <div>{{ getFileSizeName(item.FileSize) }}</div>
+              <div>{{ item.TxType }}</div>
+              <div>{{ item.TxType === 'OUT' ? '-' : '+' }}{{ item.Quantity }}</div>
+              <div>{{ item.SourceType }}</div>
+              <div>{{ item.SourceRef || item.Comment || '—' }}</div>
+              <div>{{ item.BalanceAfter ?? 0 }}</div>
+            </div>
+          </div>
+
+          <ng-template #noTx>
+            <div class="empty-state">No transactions found for the filters.</div>
+          </ng-template>
+        </div>
       </div>
     </div>
   </section>
