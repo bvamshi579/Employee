@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BillService, SheetInventory, SheetInventoryTx, SheetOption } from '../../services/bill.service';
+import { BillService, SheetInventory, SheetInventoryTx, SheetOption, FileSizeOption } from '../../services/bill.service';
 
 @Component({
   selector: 'app-inventory',
@@ -27,9 +27,11 @@ export class InventoryComponent implements OnInit {
   sourceRef = '';
   comment = '';
   performedBy = '';
+  selectedFileSize?: number | null = null;
   txDate = this.formatDateForInput(new Date());
   message = '';
   error = '';
+  fileSizes: FileSizeOption[] = [];
 
   constructor(private billService: BillService, private datePipe: DatePipe) {}
 
@@ -37,6 +39,7 @@ export class InventoryComponent implements OnInit {
     this.loadSheets();
     this.loadInventory();
     this.loadTransactions();
+    this.loadFileSizes();
   }
 
   get filteredInventory(): SheetInventory[] {
@@ -85,7 +88,7 @@ export class InventoryComponent implements OnInit {
       return;
     }
 
-    this.billService.addInventory(this.selectedSheetId, Number(this.quantityToAdd)).subscribe({
+    this.billService.addInventory(this.selectedSheetId, Number(this.quantityToAdd), this.selectedFileSize ?? undefined).subscribe({
       next: () => {
         this.message = 'Inventory updated successfully.';
         this.error = '';
@@ -114,7 +117,8 @@ export class InventoryComponent implements OnInit {
       sourceType: this.sourceType,
       sourceRef: this.sourceRef || 'Manual',
       performedBy: this.performedBy || 'System',
-      comment: this.comment || 'Manual inventory adjustment'
+      comment: this.comment || 'Manual inventory adjustment',
+      fileSize: this.selectedFileSize ?? undefined
     };
 
     this.billService.addInventoryTransaction(request).subscribe({
@@ -133,6 +137,13 @@ export class InventoryComponent implements OnInit {
         this.error = err?.error?.message || 'Unable to save the manual inventory transaction.';
         this.message = '';
       }
+    });
+  }
+
+  loadFileSizes() {
+    this.billService.getFileSizes().subscribe({
+      next: (rows) => this.fileSizes = rows || [],
+      error: () => this.error = 'Unable to load file sizes.'
     });
   }
 

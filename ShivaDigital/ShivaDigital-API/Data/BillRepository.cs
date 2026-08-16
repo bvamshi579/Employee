@@ -265,11 +265,11 @@ public class BillRepository
         await connection.OpenAsync();
 
         await using var command = new SqlCommand(@"
-            SELECT s.ID AS SheetTypeID, s.Name, ISNULL(i.Quantity,0) AS Quantity
+            SELECT s.ID AS SheetTypeID, s.Name, ISNULL(i.Quantity,0) AS Quantity, ISNULL(i.FileSize, 0) AS FileSize
             FROM dbo.vvtblSheets s
             LEFT JOIN dbo.vvtblSheetInventory i ON i.SheetTypeID = s.ID
             WHERE s.SheetType = @SheetType
-            ORDER BY s.DisplayOrder, s.Name", connection);
+            ORDER BY s.DisplayOrder, s.Name, ISNULL(i.FileSize, 0)", connection);
         command.Parameters.Add("@SheetType", SqlDbType.VarChar, 20).Value = sheetType;
 
         await using var reader = await command.ExecuteReaderAsync();
@@ -279,7 +279,8 @@ public class BillRepository
             {
                 SheetTypeID = reader.IsDBNull(reader.GetOrdinal("SheetTypeID")) ? null : reader.GetInt32(reader.GetOrdinal("SheetTypeID")),
                 Name = reader.IsDBNull(reader.GetOrdinal("Name")) ? null : reader.GetString(reader.GetOrdinal("Name")),
-                Quantity = reader.IsDBNull(reader.GetOrdinal("Quantity")) ? 0 : reader.GetInt32(reader.GetOrdinal("Quantity"))
+                Quantity = reader.IsDBNull(reader.GetOrdinal("Quantity")) ? 0 : reader.GetInt32(reader.GetOrdinal("Quantity")),
+                FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize")) ? null : reader.GetInt32(reader.GetOrdinal("FileSize"))
             });
         }
 
@@ -299,7 +300,7 @@ public class BillRepository
         if (!string.IsNullOrEmpty(txType)) where += " AND TxType = @TxType";
 
         var sql = $@"
-            SELECT TxID, SheetTypeID, TxDate, TxType, Quantity, SourceType, SourceRef, PerformedBy, Comment, BalanceAfter
+            SELECT TxID, SheetTypeID, TxDate, TxType, Quantity, SourceType, SourceRef, PerformedBy, Comment, FileSize, BalanceAfter
             FROM dbo.vvtblSheetInventoryTx
             {where}
             ORDER BY TxDate DESC
@@ -327,6 +328,7 @@ public class BillRepository
                 SourceRef = reader.IsDBNull(reader.GetOrdinal("SourceRef")) ? null : reader.GetString(reader.GetOrdinal("SourceRef")),
                 PerformedBy = reader.IsDBNull(reader.GetOrdinal("PerformedBy")) ? null : reader.GetString(reader.GetOrdinal("PerformedBy")),
                 Comment = reader.IsDBNull(reader.GetOrdinal("Comment")) ? null : reader.GetString(reader.GetOrdinal("Comment")),
+                FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize")) ? null : reader.GetInt32(reader.GetOrdinal("FileSize")),
                 BalanceAfter = reader.IsDBNull(reader.GetOrdinal("BalanceAfter")) ? null : reader.GetInt32(reader.GetOrdinal("BalanceAfter"))
             });
         }
@@ -334,7 +336,7 @@ public class BillRepository
         return result;
     }
 
-    public async Task AddInventoryAsync(int sheetTypeId, int quantityDelta, string? sourceType = null, string? sourceRef = null, string? performedBy = null, string? comment = null)
+    public async Task AddInventoryAsync(int sheetTypeId, int quantityDelta, string? sourceType = null, string? sourceRef = null, string? performedBy = null, string? comment = null, int? fileSize = null)
     {
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
@@ -354,13 +356,14 @@ public class BillRepository
 
         // Upsert: increment existing quantity or insert new row
         await using (var upsertCmd = new SqlCommand(@"
-            IF EXISTS (SELECT 1 FROM dbo.vvtblSheetInventory WHERE SheetTypeID = @SheetTypeID)
-                UPDATE dbo.vvtblSheetInventory SET Quantity = @NewQty WHERE SheetTypeID = @SheetTypeID
+            IF EXISTS (SELECT 1 FROM dbo.vvtblSheetInventory WHERE SheetTypeID = @SheetTypeID AND FileSize = @FileSize)
+                UPDATE dbo.vvtblSheetInventory SET Quantity = @NewQty WHERE SheetTypeID = @SheetTypeID AND FileSize = @FileSize
             ELSE
-                INSERT INTO dbo.vvtblSheetInventory (SheetTypeID, Quantity) VALUES (@SheetTypeID, @NewQty)", connection))
+                INSERT INTO dbo.vvtblSheetInventory (SheetTypeID, FileSize, Quantity) VALUES (@SheetTypeID, @FileSize, @NewQty)", connection))
         {
             upsertCmd.Parameters.Add("@SheetTypeID", SqlDbType.Int).Value = sheetTypeId;
             upsertCmd.Parameters.Add("@NewQty", SqlDbType.Int).Value = newQty;
+            upsertCmd.Parameters.Add("@FileSize", SqlDbType.Int).Value = (object?)fileSize ?? 0;
             await upsertCmd.ExecuteNonQueryAsync();
         }
 
@@ -368,8 +371,8 @@ public class BillRepository
         var txType = quantityDelta >= 0 ? "IN" : "OUT";
         var txQty = Math.Abs(quantityDelta);
         await using (var txCmd = new SqlCommand(@"
-            INSERT INTO dbo.vvtblSheetInventoryTx (SheetTypeID, TxDate, TxType, Quantity, SourceType, SourceRef, PerformedBy, Comment, BalanceAfter)
-            VALUES (@SheetTypeID, SYSDATETIME(), @TxType, @Quantity, @SourceType, @SourceRef, @PerformedBy, @Comment, @BalanceAfter)", connection))
+            INSERT INTO dbo.vvtblSheetInventoryTx (SheetTypeID, TxDate, TxType, Quantity, SourceType, SourceRef, PerformedBy, Comment, FileSize, BalanceAfter)
+            VALUES (@SheetTypeID, SYSDATETIME(), @TxType, @Quantity, @SourceType, @SourceRef, @PerformedBy, @Comment, @FileSize, @BalanceAfter)", connection))
         {
             txCmd.Parameters.Add("@SheetTypeID", SqlDbType.Int).Value = sheetTypeId;
             txCmd.Parameters.Add("@TxType", SqlDbType.VarChar, 10).Value = txType;
@@ -378,6 +381,7 @@ public class BillRepository
             txCmd.Parameters.Add("@SourceRef", SqlDbType.VarChar, 128).Value = (object?)sourceRef ?? DBNull.Value;
             txCmd.Parameters.Add("@PerformedBy", SqlDbType.VarChar, 128).Value = (object?)performedBy ?? DBNull.Value;
             txCmd.Parameters.Add("@Comment", SqlDbType.VarChar, 512).Value = (object?)comment ?? DBNull.Value;
+            txCmd.Parameters.Add("@FileSize", SqlDbType.Int).Value = (object?)fileSize ?? DBNull.Value;
             txCmd.Parameters.Add("@BalanceAfter", SqlDbType.Int).Value = newQty;
             await txCmd.ExecuteNonQueryAsync();
         }
@@ -450,7 +454,8 @@ public class BillRepository
                         "Bill",
                         model.BillID?.ToString(),
                         model.CorrectionUserName ?? "System",
-                        $"Bill {model.BillID} sheet issue");
+                        $"Bill {model.BillID} sheet issue",
+                        model.FileSize);
                 }
             }
         }
@@ -584,7 +589,8 @@ public class BillRepository
                     "Bill",
                     model.BillID?.ToString(),
                     model.CorrectionUserName ?? "System",
-                    $"Bill {model.BillID} inventory adjustment");
+                    $"Bill {model.BillID} inventory adjustment",
+                    model.FileSize);
             }
         }
 

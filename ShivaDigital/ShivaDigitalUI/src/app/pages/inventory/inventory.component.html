@@ -28,6 +28,13 @@
         </select>
       </div>
       <div class="form-group">
+        <label>File Size</label>
+        <select [(ngModel)]="selectedFileSize">
+          <option [ngValue]="null">(none)</option>
+          <option *ngFor="let f of fileSizes" [ngValue]="f.ID">{{ f.FileSize }}</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>Quantity</label>
         <input type="number" min="1" [(ngModel)]="quantityToAdd" />
       </div>
@@ -75,6 +82,7 @@
         <thead>
           <tr>
             <th>Sheet</th>
+            <th>File Size</th>
             <th>On hand</th>
             <th>Reserved</th>
             <th>Avg. cost</th>
@@ -84,6 +92,7 @@
         <tbody>
           <tr *ngFor="let item of filteredInventory" [class.selected-row]="selectedSheetId === item.SheetTypeID">
             <td>{{ item.Name }}</td>
+            <td>{{ item.FileSize || '—' }}</td>
             <td>{{ item.Quantity ?? 0 }}</td>
             <td>—</td>
             <td>—</td>
@@ -116,6 +125,7 @@
             <tr>
               <th>Date</th>
               <th>Sheet</th>
+              <th>File Size</th>
               <th>Type</th>
               <th>Quantity</th>
               <th>Source</th>
@@ -127,6 +137,7 @@
             <tr *ngFor="let item of transactions" [class.tx-in]="item.TxType === 'IN'" [class.tx-out]="item.TxType === 'OUT'">
               <td>{{ formatDate(item.TxDate) }}</td>
               <td>{{ getSheetName(item.SheetTypeID) }}</td>
+                <td>{{ item.FileSize || '—' }}</td>
               <td>{{ item.TxType }}</td>
               <td>{{ item.TxType === 'OUT' ? '-' : '+' }}{{ item.Quantity }}</td>
               <td>{{ item.SourceType }}</td>

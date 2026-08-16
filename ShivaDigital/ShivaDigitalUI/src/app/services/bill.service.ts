@@ -53,6 +53,7 @@ export interface SheetInventory {
   SheetTypeID?: number;
   Name?: string;
   Quantity?: number;
+  FileSize?: number;
 }
 
 export interface SheetInventoryTx {
@@ -65,6 +66,7 @@ export interface SheetInventoryTx {
   SourceRef?: string;
   PerformedBy?: string;
   Comment?: string;
+  FileSize?: number;
   BalanceAfter?: number;
 }
 
@@ -133,8 +135,8 @@ export class BillService {
     return this.http.get<SheetInventory[]>(`${this.apiUrl}/inventory/${sheetType}`);
   }
 
-  addInventory(sheetTypeId: number, quantity: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/inventory`, { sheetTypeID: sheetTypeId, quantity });
+  addInventory(sheetTypeId: number, quantity: number, fileSize?: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/inventory`, { sheetTypeID: sheetTypeId, quantity, fileSize });
   }
 
   getInventoryTransactions(sheetTypeId?: number, fromDate?: string, toDate?: string, txType?: string, page?: number, pageSize?: number): Observable<SheetInventoryTx[]> {
@@ -148,7 +150,7 @@ export class BillService {
     return this.http.get<SheetInventoryTx[]>(`${this.apiUrl}/inventory/transactions`, { params });
   }
 
-  addInventoryTransaction(req: { sheetTypeID: number; txType: string; quantity: number; sourceType?: string; sourceRef?: string; performedBy?: string; comment?: string }): Observable<void> {
+  addInventoryTransaction(req: { sheetTypeID: number; txType: string; quantity: number; sourceType?: string; sourceRef?: string; performedBy?: string; comment?: string; fileSize?: number }): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/inventory/transactions`, req);
   }
 

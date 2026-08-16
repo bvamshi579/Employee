@@ -14,10 +14,30 @@ END
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'dbo.vvtblSheetInventory') AND type in (N'U'))
 BEGIN
     CREATE TABLE dbo.vvtblSheetInventory (
-        SheetTypeID INT NOT NULL PRIMARY KEY,
+        SheetTypeID INT NOT NULL,
+        FileSize INT NOT NULL DEFAULT 0,
         Quantity INT NOT NULL DEFAULT 0,
-        CONSTRAINT FK_vvtblSheetInventory_Sheets FOREIGN KEY (SheetTypeID) REFERENCES dbo.vvtblSheets(ID)
+        CONSTRAINT FK_vvtblSheetInventory_Sheets FOREIGN KEY (SheetTypeID) REFERENCES dbo.vvtblSheets(ID),
+        CONSTRAINT PK_vvtblSheetInventory PRIMARY KEY (SheetTypeID, FileSize)
     );
+END
+ELSE
+BEGIN
+    -- If table exists but FileSize column missing, add it and convert PK to composite (SheetTypeID, FileSize)
+    IF COL_LENGTH('dbo.vvtblSheetInventory','FileSize') IS NULL
+    BEGIN
+        ALTER TABLE dbo.vvtblSheetInventory ADD FileSize INT NOT NULL DEFAULT 0;
+        -- ensure existing rows have FileSize = 0 (default applied)
+        UPDATE dbo.vvtblSheetInventory SET FileSize = 0 WHERE FileSize IS NULL;
+        -- drop existing primary key if present and recreate composite PK
+        DECLARE @pkname NVARCHAR(128);
+        SELECT @pkname = kc.name FROM sys.key_constraints kc WHERE kc.parent_object_id = OBJECT_ID('dbo.vvtblSheetInventory') AND kc.type = 'PK';
+        IF @pkname IS NOT NULL
+        BEGIN
+            EXEC('ALTER TABLE dbo.vvtblSheetInventory DROP CONSTRAINT [' + @pkname + ']');
+        END
+        ALTER TABLE dbo.vvtblSheetInventory ADD CONSTRAINT PK_vvtblSheetInventory PRIMARY KEY (SheetTypeID, FileSize);
+    END
 END
 -- Migration: AddSheetInventoryTx.sql
 -- Creates a transaction ledger for sheet inventory movements
@@ -28,6 +48,7 @@ BEGIN
         TxID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
         SheetTypeID INT NOT NULL,
         TxDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        FileSize INT NULL,
         TxType VARCHAR(10) NOT NULL, -- 'IN' or 'OUT'
         Quantity INT NOT NULL,
         SourceType VARCHAR(32) NULL, -- e.g. 'Bill', 'Manual', 'Purchase'

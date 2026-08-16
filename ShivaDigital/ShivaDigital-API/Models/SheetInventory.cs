@@ -12,4 +12,7 @@ public class SheetInventory
 
     [JsonPropertyName("Quantity")]
     public int? Quantity { get; set; }
+
+    [JsonPropertyName("FileSize")]
+    public int? FileSize { get; set; }
 }

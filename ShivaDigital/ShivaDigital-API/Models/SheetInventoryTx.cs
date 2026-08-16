@@ -31,6 +31,9 @@ public class SheetInventoryTx
     [JsonPropertyName("Comment")]
     public string? Comment { get; set; }
 
+    [JsonPropertyName("FileSize")]
+    public int? FileSize { get; set; }
+
     [JsonPropertyName("BalanceAfter")]
     public int? BalanceAfter { get; set; }
 }

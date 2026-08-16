@@ -81,7 +81,7 @@ public class BillsController : ControllerBase
     public async Task<IActionResult> AddInventory([FromBody] InventoryRequest req)
     {
         if (req == null || req.SheetTypeID <= 0 || req.Quantity == 0) return BadRequest();
-        await _repository.AddInventoryAsync(req.SheetTypeID, req.Quantity, req.SourceType, req.SourceRef, req.PerformedBy, req.Comment);
+        await _repository.AddInventoryAsync(req.SheetTypeID, req.Quantity, req.SourceType, req.SourceRef, req.PerformedBy, req.Comment, req.FileSize);
         return Ok();
     }
 
@@ -97,7 +97,7 @@ public class BillsController : ControllerBase
     {
         if (req == null || req.SheetTypeID <= 0 || req.Quantity == 0 || string.IsNullOrEmpty(req.TxType)) return BadRequest();
         var delta = req.TxType.ToUpper() == "IN" ? Math.Abs(req.Quantity) : -Math.Abs(req.Quantity);
-        await _repository.AddInventoryAsync(req.SheetTypeID, delta, req.SourceType, req.SourceRef, req.PerformedBy, req.Comment);
+        await _repository.AddInventoryAsync(req.SheetTypeID, delta, req.SourceType, req.SourceRef, req.PerformedBy, req.Comment, req.FileSize);
         return Ok();
     }
 
@@ -116,6 +116,7 @@ public class BillsController : ControllerBase
         public string? SourceRef { get; set; }
         public string? PerformedBy { get; set; }
         public string? Comment { get; set; }
+        public int? FileSize { get; set; }
     }
 
     public class InventoryTxRequest
@@ -127,6 +128,7 @@ public class BillsController : ControllerBase
         public string? SourceRef { get; set; }
         public string? PerformedBy { get; set; }
         public string? Comment { get; set; }
+        public int? FileSize { get; set; }
     }
 
     [HttpGet("{id}")]
