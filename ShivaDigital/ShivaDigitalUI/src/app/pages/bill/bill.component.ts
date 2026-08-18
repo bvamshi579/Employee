@@ -471,9 +471,10 @@ export class BillComponent implements OnInit {
 
   calculateLineAmount(line: BillLine) {
     const quantity = Number(line.Quantity ?? 0);
+    const clampedQuantity = Number.isFinite(quantity) ? Math.min(999, Math.max(0, Math.trunc(quantity))) : 0;
     const price = Number(line.Price ?? 0);
-    line.Quantity = quantity;
-    line.Amount = quantity * price;
+    line.Quantity = clampedQuantity;
+    line.Amount = clampedQuantity * price;
     this.recalculateTotals();
     this.cdr.detectChanges();
   }

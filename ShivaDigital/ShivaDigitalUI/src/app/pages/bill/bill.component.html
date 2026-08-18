@@ -254,12 +254,19 @@
 
     <h4>Lab Sheets</h4>
     <div class="sheet-grid">
-      <div class="sheet-card" *ngFor="let line of lines; trackBy: trackBySheetType">
+      <div class="sheet-row" *ngFor="let line of lines; trackBy: trackBySheetType">
         <div class="sheet-name">{{ line.SheetName }}</div>
-        <label>Qty</label>
-        <input type="number" min="0" [(ngModel)]="line.Quantity" (ngModelChange)="onQuantityInput(line)" />
+        <input
+          class="sheet-qty"
+          type="number"
+          min="0"
+          max="999"
+          maxlength="3"
+          inputmode="numeric"
+          step="1"
+          [(ngModel)]="line.Quantity"
+          (ngModelChange)="onQuantityInput(line)" />
         <div class="sheet-amount">
-          <span>Amount</span>
           <strong>{{ line.Amount | number:'1.0-0' }}</strong>
         </div>
       </div>
