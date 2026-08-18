@@ -188,7 +188,7 @@
 
       <h4>Payments</h4>
       <ul class="print-payments">
-        <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'short' }}</li>
+        <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'dd/MM/yyyy' }}</li>
         <li *ngIf="!printablePayments.length">No payments recorded.</li>
       </ul>
     </div>
@@ -290,7 +290,7 @@
         <button type="button" (click)="addPayment()">Add payment</button>
       </div>
       <ul>
-        <li *ngFor="let payment of payments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'short' }}</li>
+        <li *ngFor="let payment of payments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'dd/MM/yyyy' }}</li>
       </ul>
     </div>
 
@@ -354,7 +354,7 @@
 
       <h4>Payments</h4>
       <ul class="print-payments">
-        <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'short' }}</li>
+        <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'dd/MM/yyyy' }}</li>
         <li *ngIf="!printablePayments.length">No payments recorded.</li>
       </ul>
     </div>
