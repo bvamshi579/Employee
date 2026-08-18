@@ -1,3 +1,4 @@
+ALTER TABLE vvtblbill DISABLE TRIGGER ALL;
 IF OBJECT_ID('dbo.vvtblCorrectionUsers') IS NULL
 BEGIN
     CREATE TABLE dbo.vvtblCorrectionUsers (
