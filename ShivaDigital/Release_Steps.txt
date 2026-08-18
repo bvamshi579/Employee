@@ -2,4 +2,7 @@
 ng build --configuration production --output-path='C:\Users\balav\Desktop\ShivaDigital' 
 
 dotnet publish -c Release -o 'C:\Users\balav\Desktop\ShivaDigital\browser\MyAPI' 
-                                            
+
+{
+  "apiBase": "http://bokking2/api"
+}
