@@ -127,6 +127,7 @@ public class BillsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Bill>> CreateBill(Bill bill)
     {
+        if (!HasValidPaymentMethods(bill)) return BadRequest("Payment method is required and must be UPI, Cash, or Others.");
         var created = await _repository.CreateAsync(bill);
         return CreatedAtAction(nameof(GetBills), new { id = created.BillID ?? 0 }, created);
     }
@@ -166,6 +167,7 @@ public class BillsController : ControllerBase
     public async Task<ActionResult<Bill>> UpdateBill(int id, Bill bill)
     {
         if (bill == null || bill.BillID != id) return BadRequest();
+        if (!HasValidPaymentMethods(bill)) return BadRequest("Payment method is required and must be UPI, Cash, or Others.");
         var updated = await _repository.UpdateAsync(bill);
         return Ok(updated);
     }
@@ -178,7 +180,13 @@ public class BillsController : ControllerBase
             return BadRequest();
         }
 
-        var updated = await _repository.AddPaymentAsync(id, request.AmountPaid, DateTime.Now);
+        var paymentMethod = request.PaymentMethod?.Trim();
+        if (paymentMethod is not ("UPI" or "Cash" or "Others"))
+        {
+            return BadRequest("Payment method must be UPI, Cash, or Others.");
+        }
+
+        var updated = await _repository.AddPaymentAsync(id, request.AmountPaid, paymentMethod, DateTime.Now);
         if (updated == null)
         {
             return NotFound();
@@ -190,5 +198,11 @@ public class BillsController : ControllerBase
     public class PaymentRequest
     {
         public int AmountPaid { get; set; }
+        public string? PaymentMethod { get; set; }
+    }
+
+    private static bool HasValidPaymentMethods(Bill bill)
+    {
+        return bill.AdvancePayments?.All(payment => payment.PaymentMethod is "UPI" or "Cash" or "Others") ?? true;
     }
 }

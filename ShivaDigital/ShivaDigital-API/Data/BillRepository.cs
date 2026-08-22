@@ -170,7 +170,7 @@ public class BillRepository
         await connection.OpenAsync();
 
                 await using var command = new SqlCommand(@"
-                        SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, p.PaymentDate, p.AmountPaid AS PaymentAmount, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType, b.CorrectionUserID, u.Name AS CorrectionUserName
+                        SELECT b.BillID, b.CustomerID, c.CustomerName, c.MobileNumber, b.BillDate, p.PaymentDate, p.AmountPaid AS PaymentAmount, p.PaymentMethod, b.Files, b.FileSize, b.BookingTime, b.DeliveryTime, b.Total, b.Advance, b.BalancePaid, b.Discount, b.BillType, b.CorrectionUserID, u.Name AS CorrectionUserName
                         FROM dbo.vvtblBill b
                         LEFT JOIN dbo.vvtblCustomers c ON c.CustomerID = b.CustomerID
                         LEFT JOIN dbo.vvtblCorrectionUsers u ON u.CorrectionUserID = b.CorrectionUserID
@@ -194,6 +194,7 @@ public class BillRepository
                 BillDate = reader.IsDBNull(reader.GetOrdinal("BillDate")) ? null : reader.GetDateTime(reader.GetOrdinal("BillDate")),
                 PaymentDate = reader.IsDBNull(reader.GetOrdinal("PaymentDate")) ? null : reader.GetDateTime(reader.GetOrdinal("PaymentDate")),
                 PaymentAmount = reader.IsDBNull(reader.GetOrdinal("PaymentAmount")) ? null : reader.GetInt32(reader.GetOrdinal("PaymentAmount")),
+                PaymentMethod = reader.IsDBNull(reader.GetOrdinal("PaymentMethod")) ? "Others" : reader.GetString(reader.GetOrdinal("PaymentMethod")),
                 Files = reader.IsDBNull(reader.GetOrdinal("Files")) ? null : reader.GetString(reader.GetOrdinal("Files")),
                 FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize")) ? null : reader.GetInt32(reader.GetOrdinal("FileSize")),
                 BookingTime = reader.IsDBNull(reader.GetOrdinal("BookingTime")) ? null : reader.GetDateTime(reader.GetOrdinal("BookingTime")),
@@ -544,11 +545,12 @@ public class BillRepository
             {
                 if (payment.AmountPaid is null || payment.AmountPaid <= 0) continue;
                 await using var paymentCommand = new SqlCommand(@"
-                    INSERT INTO dbo.vvtblBillPayment (BillID, PaymentDate, AmountPaid, BillLogID)
-                    VALUES (@BillID, @PaymentDate, @AmountPaid, @BillLogID)", connection);
+                    INSERT INTO dbo.vvtblBillPayment (BillID, PaymentDate, AmountPaid, PaymentMethod, BillLogID)
+                    VALUES (@BillID, @PaymentDate, @AmountPaid, @PaymentMethod, @BillLogID)", connection);
                 paymentCommand.Parameters.Add("@BillID", SqlDbType.Int).Value = model.BillID ?? 0;
                 paymentCommand.Parameters.Add("@PaymentDate", SqlDbType.DateTime).Value = payment.PaymentDate ?? DateTime.Now;
                 paymentCommand.Parameters.Add("@AmountPaid", SqlDbType.Int).Value = payment.AmountPaid ?? 0;
+                paymentCommand.Parameters.Add("@PaymentMethod", SqlDbType.VarChar, 20).Value = payment.PaymentMethod ?? "Others";
                 paymentCommand.Parameters.Add("@BillLogID", SqlDbType.Int).Value = payment.BillLogID ?? 0;
                 await paymentCommand.ExecuteNonQueryAsync();
             }
@@ -720,11 +722,12 @@ public class BillRepository
             {
                 if (payment.AmountPaid is null || payment.AmountPaid <= 0) continue;
                 await using var paymentCommand = new SqlCommand(@"
-                    INSERT INTO dbo.vvtblBillPayment (BillID, PaymentDate, AmountPaid, BillLogID)
-                    VALUES (@BillID, @PaymentDate, @AmountPaid, @BillLogID)", connection);
+                    INSERT INTO dbo.vvtblBillPayment (BillID, PaymentDate, AmountPaid, PaymentMethod, BillLogID)
+                    VALUES (@BillID, @PaymentDate, @AmountPaid, @PaymentMethod, @BillLogID)", connection);
                 paymentCommand.Parameters.Add("@BillID", SqlDbType.Int).Value = model.BillID ?? 0;
                 paymentCommand.Parameters.Add("@PaymentDate", SqlDbType.DateTime).Value = payment.PaymentDate ?? DateTime.Now;
                 paymentCommand.Parameters.Add("@AmountPaid", SqlDbType.Int).Value = payment.AmountPaid ?? 0;
+                paymentCommand.Parameters.Add("@PaymentMethod", SqlDbType.VarChar, 20).Value = payment.PaymentMethod ?? "Others";
                 paymentCommand.Parameters.Add("@BillLogID", SqlDbType.Int).Value = payment.BillLogID ?? 0;
                 await paymentCommand.ExecuteNonQueryAsync();
             }
@@ -734,18 +737,19 @@ public class BillRepository
         return await GetByIdAsync(model.BillID ?? 0) ?? model;
     }
 
-    public async Task<Bill?> AddPaymentAsync(int billId, int amount, DateTime? paymentDate = null)
+    public async Task<Bill?> AddPaymentAsync(int billId, int amount, string paymentMethod, DateTime? paymentDate = null)
     {
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
         await using var command = new SqlCommand(@"
-            INSERT INTO dbo.vvtblBillPayment (BillID, PaymentDate, AmountPaid, BillLogID)
-            VALUES (@BillID, @PaymentDate, @AmountPaid, @BillLogID)", connection);
+            INSERT INTO dbo.vvtblBillPayment (BillID, PaymentDate, AmountPaid, PaymentMethod, BillLogID)
+            VALUES (@BillID, @PaymentDate, @AmountPaid, @PaymentMethod, @BillLogID)", connection);
 
         command.Parameters.Add("@BillID", SqlDbType.Int).Value = billId;
         command.Parameters.Add("@PaymentDate", SqlDbType.DateTime).Value = paymentDate ?? DateTime.Now;
         command.Parameters.Add("@AmountPaid", SqlDbType.Int).Value = amount;
+        command.Parameters.Add("@PaymentMethod", SqlDbType.VarChar, 20).Value = paymentMethod;
         command.Parameters.Add("@BillLogID", SqlDbType.Int).Value = 0;
         await command.ExecuteNonQueryAsync();
 
@@ -821,7 +825,7 @@ public class BillRepository
 
         // load payments
         bill.AdvancePayments = new List<BillPayment>();
-        await using (var payCmd = new SqlCommand(@"SELECT BillPaymentID, BillID, PaymentDate, AmountPaid, BillLogID FROM dbo.vvtblBillPayment WHERE BillID = @BillID", connection))
+        await using (var payCmd = new SqlCommand(@"SELECT BillPaymentID, BillID, PaymentDate, AmountPaid, PaymentMethod, BillLogID FROM dbo.vvtblBillPayment WHERE BillID = @BillID", connection))
         {
             payCmd.Parameters.Add("@BillID", SqlDbType.Int).Value = bill.BillID ?? 0;
             await using var pr = await payCmd.ExecuteReaderAsync();
@@ -833,6 +837,7 @@ public class BillRepository
                     BillID = pr.IsDBNull(pr.GetOrdinal("BillID")) ? null : pr.GetInt32(pr.GetOrdinal("BillID")),
                     PaymentDate = pr.IsDBNull(pr.GetOrdinal("PaymentDate")) ? null : pr.GetDateTime(pr.GetOrdinal("PaymentDate")),
                     AmountPaid = pr.IsDBNull(pr.GetOrdinal("AmountPaid")) ? null : pr.GetInt32(pr.GetOrdinal("AmountPaid")),
+                    PaymentMethod = pr.IsDBNull(pr.GetOrdinal("PaymentMethod")) ? "Others" : pr.GetString(pr.GetOrdinal("PaymentMethod")),
                     BillLogID = pr.IsDBNull(pr.GetOrdinal("BillLogID")) ? null : pr.GetInt32(pr.GetOrdinal("BillLogID"))
                 });
             }

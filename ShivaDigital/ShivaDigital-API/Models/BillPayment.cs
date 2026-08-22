@@ -16,6 +16,9 @@ public class BillPayment
     [JsonPropertyName("AmountPaid")]
     public int? AmountPaid { get; set; }
 
+    [JsonPropertyName("PaymentMethod")]
+    public string? PaymentMethod { get; set; }
+
     [JsonPropertyName("BillLogID")]
     public int? BillLogID { get; set; }
 }

@@ -32,6 +32,7 @@ export class BillComponent implements OnInit {
   searchGridPage = 1;
   searchGridPageSize = 10;
   paymentAmountForBill = 0;
+  paymentMethodForBill: BillPayment['PaymentMethod'] = '';
   paymentMessage = '';
   paymentError = '';
   // filtering and paging
@@ -93,6 +94,7 @@ export class BillComponent implements OnInit {
   lines: BillLine[] = [];
   payments: BillPayment[] = [];
   paymentAmount = 0;
+  paymentMethod: BillPayment['PaymentMethod'] = '';
 
   constructor(
     private customerService: CustomerService,
@@ -277,7 +279,12 @@ export class BillComponent implements OnInit {
       return;
     }
 
-    this.billService.addPayment(this.selectedPaymentBill.BillID, this.paymentAmountForBill).subscribe({
+    if (!this.paymentMethodForBill) {
+      this.paymentError = 'Please select a payment method.';
+      return;
+    }
+
+    this.billService.addPayment(this.selectedPaymentBill.BillID, this.paymentAmountForBill, this.paymentMethodForBill).subscribe({
       next: (updatedBill) => {
         this.paymentAmountForBill = 0;
         this.paymentMessage = 'Payment added successfully.';
@@ -664,9 +671,14 @@ export class BillComponent implements OnInit {
 
   addPayment() {
     if (!this.paymentAmount || this.paymentAmount <= 0) return;
+    if (!this.paymentMethod) {
+      this.message = 'Please select a payment method.';
+      return;
+    }
     this.payments.push({
       PaymentDate: `${this.formatDateForInput(new Date().toISOString())}:00`,
-      AmountPaid: this.paymentAmount
+      AmountPaid: this.paymentAmount,
+      PaymentMethod: this.paymentMethod
     });
     this.paymentAmount = 0;
     this.computePaymentTotals();
@@ -747,6 +759,10 @@ export class BillComponent implements OnInit {
     if (!this.bookingTime) {
       this.fieldErrors.bookingTime = 'Booking time is required.';
     }
+    if (this.payments.some((payment) => !payment.PaymentMethod)) {
+      this.message = 'Please select a payment method for every payment.';
+      return false;
+    }
     const selectedLines = this.lines.filter((l) => (l.Quantity ?? 0) > 0);
     if (!selectedLines.length) {
       this.fieldErrors.lines = 'At least one sheet quantity must be greater than zero.';
@@ -805,6 +821,7 @@ export class BillComponent implements OnInit {
     this.discount = bill.Discount || 0;
     this.billType = bill.BillType || 'Lab';
     this.payments = bill.AdvancePayments || [];
+    this.paymentMethod = '';
     this.selectedCorrectionUserId = bill.CorrectionUserID ?? null;
     this.computePaymentTotals();
     // map lines to sheet options if available, otherwise use provided lines

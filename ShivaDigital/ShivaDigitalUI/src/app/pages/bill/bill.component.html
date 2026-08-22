@@ -45,6 +45,7 @@
             <th class="align-center">Bill Date</th>
             <th *ngIf="searchMode === 'payment-search'" class="align-center">Payment Date</th>
             <th *ngIf="searchMode === 'payment-search'" class="align-right">Payment Amount</th>
+            <th *ngIf="searchMode === 'payment-search'" class="align-left">Payment Method</th>
             <th class="align-right">Total</th>
             <th class="align-right">Discount</th>
             <th class="align-right">Payable</th>
@@ -61,6 +62,7 @@
             <td class="align-center">{{ bill.BillDate | date:'dd/MM/yyyy' }}</td>
             <td *ngIf="searchMode === 'payment-search'" class="align-center">{{ bill.PaymentDate | date:'dd/MM/yyyy' }}</td>
             <td *ngIf="searchMode === 'payment-search'" class="align-right">{{ bill.PaymentAmount | number:'1.0-0' }}</td>
+            <td *ngIf="searchMode === 'payment-search'" class="align-left">{{ bill.PaymentMethod || 'Others' }}</td>
             <td class="align-right">{{ bill.Total | number:'1.0-0' }}</td>
             <td class="align-right">{{ bill.Discount | number:'1.0-0' }}</td>
             <td class="align-right">{{ getPayable(bill) | number:'1.0-0' }}</td>
@@ -113,6 +115,12 @@
       <div class="payment-section no-print">
         <div class="payment-row compact-row">
           <input type="number" [(ngModel)]="paymentAmountForBill" placeholder="Amount paid" />
+          <select [(ngModel)]="paymentMethodForBill" aria-label="Payment method" required>
+            <option value="">Select payment method</option>
+            <option value="UPI">UPI</option>
+            <option value="Cash">Cash</option>
+            <option value="Others">Others</option>
+          </select>
           <button type="button" (click)="addPaymentToSelectedBill()">Add payment</button>
         </div>
         <div *ngIf="paymentMessage" class="toast success">{{ paymentMessage }}</div>
@@ -125,12 +133,14 @@
               <tr class="payment-table-head">
                 <th class="align-left">Date</th>
                 <th class="align-right">Amount</th>
+                <th class="align-left">Method</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let payment of sortedAdvancePayments">
                 <td class="align-left">{{ payment.PaymentDate | date:'dd/MM/yyyy hh:mm a' }}</td>
                 <td class="align-right">{{ payment.AmountPaid | number:'1.0-0' }}</td>
+                <td class="align-left">{{ payment.PaymentMethod || 'Others' }}</td>
               </tr>
             </tbody>
           </table>
@@ -188,7 +198,7 @@
 
       <h4>Payments</h4>
       <ul class="print-payments">
-        <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'dd/MM/yyyy' }}</li>
+        <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} by {{ payment.PaymentMethod || 'Others' }} on {{ payment.PaymentDate | date:'dd/MM/yyyy' }}</li>
         <li *ngIf="!printablePayments.length">No payments recorded.</li>
       </ul>
     </div>
@@ -287,10 +297,16 @@
       <h4>Payments</h4>
       <div class="payment-row">
         <input type="number" [(ngModel)]="paymentAmount" placeholder="Amount paid" />
+        <select [(ngModel)]="paymentMethod" aria-label="Payment method" required>
+          <option value="">Select payment method</option>
+          <option value="UPI">UPI</option>
+          <option value="Cash">Cash</option>
+          <option value="Others">Others</option>
+        </select>
         <button type="button" (click)="addPayment()">Add payment</button>
       </div>
       <ul>
-        <li *ngFor="let payment of payments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'dd/MM/yyyy' }}</li>
+        <li *ngFor="let payment of payments">{{ payment.AmountPaid | number:'1.0-0' }} by {{ payment.PaymentMethod || 'Others' }} on {{ payment.PaymentDate | date:'dd/MM/yyyy' }}</li>
       </ul>
     </div>
 
@@ -354,7 +370,7 @@
 
       <h4>Payments</h4>
       <ul class="print-payments">
-        <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} on {{ payment.PaymentDate | date:'dd/MM/yyyy' }}</li>
+        <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} by {{ payment.PaymentMethod || 'Others' }} on {{ payment.PaymentDate | date:'dd/MM/yyyy' }}</li>
         <li *ngIf="!printablePayments.length">No payments recorded.</li>
       </ul>
     </div>

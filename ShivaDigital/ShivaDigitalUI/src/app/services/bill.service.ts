@@ -16,6 +16,7 @@ export interface BillPayment {
   BillID?: number;
   PaymentDate?: string;
   AmountPaid?: number;
+  PaymentMethod?: 'UPI' | 'Cash' | 'Others' | '';
   BillLogID?: number;
 }
 
@@ -27,6 +28,7 @@ export interface Bill {
   BillDate?: string;
   PaymentDate?: string;
   PaymentAmount?: number;
+  PaymentMethod?: 'UPI' | 'Cash' | 'Others';
   Files?: string;
   FileSize?: number;
   BookingTime?: string;
@@ -188,8 +190,8 @@ export class BillService {
     return this.http.get<Bill>(`${this.apiUrl}/${id}`);
   }
 
-  addPayment(billId: number | undefined, paymentAmount: number): Observable<Bill> {
+  addPayment(billId: number | undefined, paymentAmount: number, paymentMethod: BillPayment['PaymentMethod']): Observable<Bill> {
     if (!billId) throw new Error('Bill ID required');
-    return this.http.post<Bill>(`${this.apiUrl}/${billId}/payments`, { amountPaid: paymentAmount });
+    return this.http.post<Bill>(`${this.apiUrl}/${billId}/payments`, { amountPaid: paymentAmount, paymentMethod });
   }
 }

@@ -25,6 +25,9 @@ public class Bill
     [JsonPropertyName("PaymentAmount")]
     public int? PaymentAmount { get; set; }
 
+    [JsonPropertyName("PaymentMethod")]
+    public string? PaymentMethod { get; set; }
+
     [JsonPropertyName("Files")]
     public string? Files { get; set; }
 
