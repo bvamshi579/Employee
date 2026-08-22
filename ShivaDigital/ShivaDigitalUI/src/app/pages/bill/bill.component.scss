@@ -584,7 +584,7 @@ input:focus, select:focus {
 .print-logo img { width: 100%; max-width: none; height: auto; display: block; }
 .print-signatures { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 24px; margin-top: 28px; page-break-inside: avoid; }
 .print-signature-box { width: 190px; text-align: center; page-break-inside: avoid; }
-.print-signature-line { border-top: 1px solid #263238; margin-bottom: 6px; }
+.print-signature-area { width: 150px; height: 70px; margin: 0 auto 6px; border: 1px solid #263238; background: #fff; }
 
 @media (max-width:1200px){.sheet-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
