@@ -219,7 +219,7 @@ public class BillRepository
         await connection.OpenAsync();
 
         await using var command = new SqlCommand(@"
-            SELECT ID, Name, Amount, SheetType
+            SELECT ID, Name, Amount, SheetType, SignatureTitle
             FROM dbo.vvtblSheets
             WHERE SheetType = @SheetType
             ORDER BY DisplayOrder, Name", connection);
@@ -233,7 +233,8 @@ public class BillRepository
                 SheetTypeID = reader.IsDBNull(reader.GetOrdinal("ID")) ? null : reader.GetInt32(reader.GetOrdinal("ID")),
                 Name = reader.IsDBNull(reader.GetOrdinal("Name")) ? null : reader.GetString(reader.GetOrdinal("Name")),
                 Amount = reader.IsDBNull(reader.GetOrdinal("Amount")) ? null : reader.GetDouble(reader.GetOrdinal("Amount")),
-                SheetType = reader.IsDBNull(reader.GetOrdinal("SheetType")) ? null : reader.GetString(reader.GetOrdinal("SheetType"))
+                SheetType = reader.IsDBNull(reader.GetOrdinal("SheetType")) ? null : reader.GetString(reader.GetOrdinal("SheetType")),
+                SignatureTitle = reader.IsDBNull(reader.GetOrdinal("SignatureTitle")) ? null : reader.GetString(reader.GetOrdinal("SignatureTitle"))
             });
         }
 
@@ -803,7 +804,7 @@ public class BillRepository
         // load lines with sheet names
         bill.Lines = new List<BillLine>();
         await using (var linesCmd = new SqlCommand(@"
-            SELECT d.SheetTypeID, s.Name AS SheetName, d.Quanity, d.Price, d.Amount
+            SELECT d.SheetTypeID, s.Name AS SheetName, s.SignatureTitle, d.Quanity, d.Price, d.Amount
             FROM dbo.vvtblBillDetails d
             LEFT JOIN dbo.vvtblSheets s ON s.ID = d.SheetTypeID
             WHERE d.BillID = @BillID", connection))
@@ -816,6 +817,7 @@ public class BillRepository
                 {
                     SheetTypeID = lr.IsDBNull(lr.GetOrdinal("SheetTypeID")) ? null : lr.GetInt32(lr.GetOrdinal("SheetTypeID")),
                     SheetName = lr.IsDBNull(lr.GetOrdinal("SheetName")) ? null : lr.GetString(lr.GetOrdinal("SheetName")),
+                    SignatureTitle = lr.IsDBNull(lr.GetOrdinal("SignatureTitle")) ? null : lr.GetString(lr.GetOrdinal("SignatureTitle")),
                     Quantity = lr.IsDBNull(lr.GetOrdinal("Quanity")) ? null : lr.GetInt32(lr.GetOrdinal("Quanity")),
                     Price = lr.IsDBNull(lr.GetOrdinal("Price")) ? null : (double?)Convert.ToDouble(lr.GetValue(lr.GetOrdinal("Price"))),
                     Amount = lr.IsDBNull(lr.GetOrdinal("Amount")) ? null : (double?)Convert.ToDouble(lr.GetValue(lr.GetOrdinal("Amount")))

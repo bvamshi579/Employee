@@ -470,6 +470,7 @@ export class BillComponent implements OnInit {
     this.lines = this.sheetOptions.map((sheet) => ({
       SheetTypeID: sheet.SheetTypeID,
       SheetName: sheet.Name,
+      SignatureTitle: sheet.SignatureTitle,
       Quantity: 0,
       Price: sheet.Amount,
       Amount: 0
@@ -595,6 +596,14 @@ export class BillComponent implements OnInit {
 
   get printablePayments(): BillPayment[] {
     return this.selectedSearchBill?.AdvancePayments?.length ? this.selectedSearchBill.AdvancePayments || [] : this.payments;
+  }
+
+  get printableSignatureTitles(): string[] {
+    return [...new Set(
+      this.printableLines
+        .map((item) => item.SignatureTitle?.trim())
+        .filter((title): title is string => Boolean(title))
+    )];
   }
 
   get sortedAdvancePayments(): BillPayment[] {
@@ -837,6 +846,7 @@ export class BillComponent implements OnInit {
         return {
           SheetTypeID: s.SheetTypeID,
           SheetName: s.Name,
+          SignatureTitle: s.SignatureTitle,
           Quantity: Number(qty ?? 0),
           Price: s.Amount,
           Amount: Number(amt ?? 0)

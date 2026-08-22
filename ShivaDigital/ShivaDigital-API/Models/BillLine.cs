@@ -10,6 +10,9 @@ public class BillLine
     [JsonPropertyName("SheetName")]
     public string? SheetName { get; set; }
 
+    [JsonPropertyName("SignatureTitle")]
+    public string? SignatureTitle { get; set; }
+
     [JsonPropertyName("Quantity")]
     public int? Quantity { get; set; }
 

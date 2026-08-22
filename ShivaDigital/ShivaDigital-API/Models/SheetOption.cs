@@ -15,4 +15,7 @@ public class SheetOption
 
     [JsonPropertyName("SheetType")]
     public string? SheetType { get; set; }
+
+    [JsonPropertyName("SignatureTitle")]
+    public string? SignatureTitle { get; set; }
 }

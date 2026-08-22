@@ -12,6 +12,11 @@ BEGIN
     ALTER TABLE dbo.vvtblBill ADD CorrectionUserID INT NULL;
 END
 
+IF COL_LENGTH('dbo.vvtblSheets','SignatureTitle') IS NULL
+BEGIN
+    ALTER TABLE dbo.vvtblSheets ADD SignatureTitle VARCHAR(200) NULL;
+END
+
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'dbo.vvtblSheetInventory') AND type in (N'U'))
 BEGIN
     -- Inventory buckets: either a SheetTypeID OR a FileSize, tracked separately.

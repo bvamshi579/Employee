@@ -6,6 +6,7 @@ import { API_BASE } from '../app.tokens';
 export interface BillLine {
   SheetTypeID?: number;
   SheetName?: string;
+  SignatureTitle?: string;
   Quantity?: number;
   Price?: number;
   Amount?: number;
@@ -47,6 +48,7 @@ export interface Bill {
 export interface SheetOption {
   SheetTypeID?: number;
   Name?: string;
+  SignatureTitle?: string;
   Amount?: number;
   SheetType?: string;
 }

@@ -201,6 +201,12 @@
         <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} by {{ payment.PaymentMethod || 'Others' }} on {{ payment.PaymentDate | date:'dd/MM/yyyy' }}</li>
         <li *ngIf="!printablePayments.length">No payments recorded.</li>
       </ul>
+      <div class="print-signatures" *ngIf="printableSignatureTitles.length">
+        <div class="print-signature-box" *ngFor="let title of printableSignatureTitles">
+          <div class="print-signature-line"></div>
+          <strong>{{ title }}</strong>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -373,6 +379,12 @@
         <li *ngFor="let payment of printablePayments">{{ payment.AmountPaid | number:'1.0-0' }} by {{ payment.PaymentMethod || 'Others' }} on {{ payment.PaymentDate | date:'dd/MM/yyyy' }}</li>
         <li *ngIf="!printablePayments.length">No payments recorded.</li>
       </ul>
+      <div class="print-signatures" *ngIf="printableSignatureTitles.length">
+        <div class="print-signature-box" *ngFor="let title of printableSignatureTitles">
+          <div class="print-signature-line"></div>
+          <strong>{{ title }}</strong>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -582,6 +582,9 @@ input:focus, select:focus {
 .printable-bill-inner{max-width:560px;border:1px solid #dbe7f8;border-radius:12px;padding:0.4rem 0.8rem 0.8rem;background:#fff}
 .print-logo { text-align: center; margin: 0; width: 100%; }
 .print-logo img { width: 100%; max-width: none; height: auto; display: block; }
+.print-signatures { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 24px; margin-top: 28px; page-break-inside: avoid; }
+.print-signature-box { width: 190px; text-align: center; page-break-inside: avoid; }
+.print-signature-line { border-top: 1px solid #263238; margin-bottom: 6px; }
 
 @media (max-width:1200px){.sheet-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
