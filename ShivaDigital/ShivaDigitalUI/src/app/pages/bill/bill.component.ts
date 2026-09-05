@@ -154,13 +154,8 @@ export class BillComponent implements OnInit {
     const to = new Date();
     const from = new Date();
     from.setMonth(from.getMonth() - 1);
-    if (this.searchMode === 'payment-search') {
       this.searchFromDate = this.formatDateOnly(to);
       this.searchToDate = this.formatDateOnly(to);
-    } else {
-      this.searchFromDate = this.formatDateOnly(from);
-      this.searchToDate = this.formatDateOnly(to);
-    }
   }
 
   private formatDateOnly(date: Date): string {
