@@ -31,6 +31,7 @@ export class BillComponent implements OnInit {
   searchGridFilter = '';
   searchGridPage = 1;
   searchGridPageSize = 10;
+  searchDueOnly = false;
   paymentAmountForBill = 0;
   paymentMethodForBill: BillPayment['PaymentMethod'] = '';
   paymentMessage = '';
@@ -412,9 +413,15 @@ export class BillComponent implements OnInit {
 
   get filteredSearchBills(): Bill[] {
     const filterTerm = (this.searchGridFilter || '').toString().trim().toLowerCase();
-    if (!filterTerm) return this.searchBills;
+    let base = this.searchBills;
 
-    return this.searchBills.filter((bill) => {
+    if (this.searchDueOnly) {
+      base = base.filter((bill) => this.getBalanceDue(bill) > 0);
+    }
+
+    if (!filterTerm) return base;
+
+    return base.filter((bill) => {
       const haystack = [
         bill.BillID?.toString() || '',
         bill.CustomerName || '',

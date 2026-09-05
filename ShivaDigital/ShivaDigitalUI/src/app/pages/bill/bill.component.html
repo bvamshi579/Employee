@@ -11,6 +11,10 @@
         <label>To date</label>
         <input type="date" [(ngModel)]="searchToDate" />
       </div>
+      <div class="form-group due-search-filter">
+        <label>Due Only</label>
+        <label class="due-toggle"><input type="checkbox" [(ngModel)]="searchDueOnly" (change)="onSearchGridFilterChange()" /> Due Only</label>
+      </div>
       <div class="form-group">
         <label>&nbsp;</label>
         <button type="button" (click)="loadSearchBills()">Search</button>
