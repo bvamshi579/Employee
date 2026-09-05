@@ -599,11 +599,20 @@ export class BillComponent implements OnInit {
   }
 
   get printableSignatureTitles(): string[] {
-    return [...new Set(
-      this.printableLines
-        .map((item) => item.SignatureTitle?.trim())
-        .filter((title): title is string => Boolean(title))
-    )];
+    const requiredTitles = ['Making', 'Correction/Print'];
+    const lineTitles = this.printableLines
+      .map((item) => item.SignatureTitle?.trim())
+      .filter((title): title is string => Boolean(title));
+
+    const uniqueTitles = new Map<string, string>();
+    [...requiredTitles, ...lineTitles].forEach((title) => {
+      const key = title.replace(/\s+/g, ' ').trim().toLowerCase();
+      if (!uniqueTitles.has(key)) {
+        uniqueTitles.set(key, title.replace(/\s+/g, ' ').trim());
+      }
+    });
+
+    return [...uniqueTitles.values()];
   }
 
   get sortedAdvancePayments(): BillPayment[] {
